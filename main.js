@@ -13,12 +13,7 @@ const server = net.createServer(con => {
     }
     conNum++
     con.write("Hewwo!\r\n" + `Ets l'usuari ${formatTerminalNick()}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
-    const otherNicks = Object.keys(users).filter(x => x !== currentCon)
-    if(otherNicks != 0) {
-        con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(nick => ` - ${formatTerminalNick(nick)}`).join("\r\n")}\r\n`)
-    } else {
-        con.write("De moment ets l'únic usuari connectat. Quan entri algú més, un avis apareixerà a la pantalla.\r\n")
-    }
+    printUserList()
     function sendToOthers(text) {
         const connections = Object.values(users).map(x => x.connection)
         connections.filter(x => x !== con).forEach(x => x.write(text))
@@ -28,6 +23,16 @@ const server = net.createServer(con => {
     function randomInt(start, end) {
         return Math.floor(Math.random()*(end+1-start)+start)
     }
+
+    function printUserList() {
+        const otherNicks = Object.keys(users).filter(x => x !== currentCon)
+        if(otherNicks != 0) {
+            con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(nick => ` - ${formatTerminalNick(nick)}`).join("\r\n")}\r\n`)
+        } else {
+            con.write("De moment ets l'únic usuari connectat. Quan entri algú més, un avis apareixerà a la pantalla.\r\n")
+        }
+    }
+
     function colorToByte(text) {
         text = text.toLowerCase()
         const colorMappings = {
@@ -84,7 +89,10 @@ const server = net.createServer(con => {
         } else if(command === "help") {
             con.write("·/nick [newNick]: Used to change your nick. Two users cannot have the same nick.\r\n")
             con.write("·/nickColor [newColor]: Used to change your nick's color. The available colors are: red, green, yellow, blue, magenta, cyan, and white.\r\n")
+            con.write("·/users: Prints the list of connected users (other than oneself).\r\n")
             con.write("·/help: Shows and describes the available commands.\r\n")
+        } else if(command === "users") {
+            printUserList()
         } else{
             con.write("La comanda no és valida.\r\n")
         }
@@ -118,4 +126,5 @@ server.listen(8000)
 - better format for oneself
 - Log segons usuari
 - Comanda de DMs
+- Comanda per mirar la llista d'usuaris
 */
