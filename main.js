@@ -7,12 +7,12 @@ const server = net.createServer(con => {
     let currentCon = `"Foo${conNum}"`
     users[currentCon] = {
         terminalNick: {
-            color: colorToByte("white")
+            color: randomInt(0x31, 0x36)
         },
         connection: con,
     }
     conNum++
-    con.write("Hewwo!\r\n" + `Ets l'usuari ${currentCon}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
+    con.write("Hewwo!\r\n" + `Ets l'usuari ${formatTerminalNick()}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
     const otherNicks = Object.keys(users).filter(x => x !== currentCon)
     if(otherNicks != 0) {
         con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(nick => ` - ${formatTerminalNick(nick)}`).join("\r\n")}\r\n`)
@@ -25,6 +25,9 @@ const server = net.createServer(con => {
     }
     sendToOthers(`Ha arribat l'usuari ${currentCon}\r\n`)
 
+    function randomInt(start, end) {
+        return Math.floor(Math.random()*(end+1-start)+start)
+    }
     function colorToByte(text) {
         text = text.toLowerCase()
         const colorMappings = {
