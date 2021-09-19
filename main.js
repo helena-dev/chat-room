@@ -10,6 +10,7 @@ const server = net.createServer(con => {
             color: randomInt(0x31, 0x36)
         },
         connection: con,
+        lastActivity: new Date()
     }
     conNum++
     con.write("Hewwo!\r\n" + `Ets l'usuari ${formatTerminalNick()}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
@@ -26,8 +27,9 @@ const server = net.createServer(con => {
 
     function printUserList() {
         const otherNicks = Object.keys(users).filter(x => x !== currentCon)
+        const formatEntry = nick => ` - ${formatTerminalNick(nick)} (Last Active on: ${formatDate(users[nick].lastActivity)})`;
         if(otherNicks != 0) {
-            con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(nick => ` - ${formatTerminalNick(nick)}`).join("\r\n")}\r\n`)
+            con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(formatEntry).join("\r\n")}\r\n`)
         } else {
             con.write("De moment ets l'únic usuari connectat. Quan entri algú més, un avis apareixerà a la pantalla.\r\n")
         }
@@ -58,7 +60,7 @@ const server = net.createServer(con => {
     }
 
     function formatDate(preformatDate) {
-        return `(${preformatDate.getHours()}:${preformatDate.getMinutes()})`
+        return `[${preformatDate.getHours()}:${preformatDate.getMinutes()}]`
     }
 
     function handleCommand(text) {
@@ -101,6 +103,7 @@ const server = net.createServer(con => {
 
     con.on("data", chunk => {
         date = new Date()
+        users[currentCon].lastActivity = date
         console.log(`Han arribat dades. Connexió: ${currentCon}`)
         console.log(JSON.stringify(chunk.toString()))
         let input = chunk.toString().trim()
