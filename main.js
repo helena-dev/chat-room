@@ -64,9 +64,9 @@ const server = net.createServer(con => {
         }
         const [command, arguments] = [match[1], match[2]]
         if(command === "nick") {
-            if(!(arguments in users)) {
-                const oldTerminalNick = formatTerminalNick()
-                const newNick = `"${arguments}"`
+            const oldTerminalNick = formatTerminalNick()
+            const newNick = `"${arguments}"`            
+            if(!(newNick in users)) {
                 users[newNick] = users[currentCon]
                 delete users[currentCon]
                 currentCon = newNick
