@@ -4,7 +4,7 @@ let users = {}
 
 const server = net.createServer(con => {
     console.log(`Ha arribat una connexió! El seu número és ${conNum}.`)
-    let currentCon = `"Foo${conNum}"`
+    let currentCon = `Foo${conNum}`
     users[currentCon] = {
         terminalNick: {
             color: randomInt(0x31, 0x36)
@@ -54,7 +54,7 @@ const server = net.createServer(con => {
     function formatTerminalNick(userNick = currentCon) {
         const normalBuf = Buffer.from([0x1b, 0x5b, 0x30, 0x6d])
         const buf = Buffer.from([0x1b, 0x5b, 0x33, users[userNick].terminalNick.color, 0x6d])
-        return `${buf}${userNick}${normalBuf}`
+        return `${buf}"${userNick}"${normalBuf}`
     }
 
     function formatDate(preformatDate) {
@@ -70,7 +70,7 @@ const server = net.createServer(con => {
         const [command, arguments] = [match[1], match[2]]
         if(command === "nick") {
             const oldTerminalNick = formatTerminalNick()
-            const newNick = `"${arguments}"`            
+            const newNick = `${arguments}`            
             if(!(newNick in users)) {
                 users[newNick] = users[currentCon]
                 delete users[currentCon]
@@ -126,5 +126,4 @@ server.listen(8000)
 - better format for oneself
 - Log segons usuari
 - Comanda de DMs
-- Comanda per mirar la llista d'usuaris
 */
