@@ -2,7 +2,7 @@ const net = require("net");
 let conNum = 0
 let users = {}
 
-const server = net.createServer(con => {    
+const server = net.createServer(con => {
     console.log(`Ha arribat una connexió! El seu número és ${conNum}.`)
     let currentCon = `"Foo${conNum}"`
     users[currentCon] = {
@@ -12,7 +12,7 @@ const server = net.createServer(con => {
         connection: con,
     }
     conNum++
-    con.write("Hewwo!\r\n" + `Ets l'usuari ${currentCon}\r\n`)
+    con.write("Hewwo!\r\n" + `Ets l'usuari ${currentCon}.\r\n` + 'Input "/help" to get the help message for the different commands.')
     const otherNicks = Object.keys(users).filter(x => x !== currentCon)
     if(otherNicks != 0) {
         con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(nick => ` - ${formatTerminalNick(nick)}`).join("\r\n")}\r\n`)
@@ -49,6 +49,10 @@ const server = net.createServer(con => {
         return `${buf}${userNick}${normalBuf}`
     }
 
+    function formatDate(preformatDate) {
+        return `(${preformatDate.getHours()}:${preformatDate.getMinutes()})`
+    }
+
     function handleCommand(text) {
         const match = /^([a-z]+)(?: +([a-z ]+)?)?$/i.exec(text)
         if(match === null) {
@@ -74,12 +78,18 @@ const server = net.createServer(con => {
             if(color) {
                 users[currentCon].terminalNick.color = color
             }
+        } else if(command === "help") {
+            con.write("·/nick [newNick]: Used to change your nick. Two users cannot have the same nick.\r\n")
+            con.write("·/nickColor [newColor]: Used to change your nick's color. The available colors are: red, green, yellow, blue, magenta, cyan, and white.\r\n")
+            con.write("·/help: Shows and describes the available commands.\r\n")
         } else{
             con.write("La comanda no és valida.\r\n")
         }
     }
 
+
     con.on("data", chunk => {
+        date = new Date()
         console.log(`Han arribat dades. Connexió: ${currentCon}`)
         console.log(JSON.stringify(chunk.toString()))
         let input = chunk.toString().trim()
@@ -87,7 +97,7 @@ const server = net.createServer(con => {
             input = input.substring(1)
             handleCommand(input)
         } else {
-            sendToOthers(`·${formatTerminalNick()}: ${input}\r\n`)
+            sendToOthers(`·${formatDate(date)} ${formatTerminalNick()}: ${input}\r\n`)
         }
     })
 
@@ -102,8 +112,8 @@ server.listen(8000)
 
 /*TODO:
 - Constrasenyes
-- Time stamps
+- help command
+- better format for oneself
 - Log segons usuari
 - Comanda de DMs
-- Noms d'usuari amb colorines
 */
