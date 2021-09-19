@@ -18,6 +18,7 @@ const server = net.createServer(con => {
     conNum++
     con.write("Hewwo!\r\n" + `Ets l'usuari ${formatTerminalNick()}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
     printUserList()
+    con.write("\r\n")
     function sendToOthers(text) {
         const connections = Object.values(users).map(x => x.connection)
         connections.filter(x => x !== con).forEach(x => x.write(text))
@@ -64,7 +65,7 @@ const server = net.createServer(con => {
     }
 
     function formatDate(preformatDate) {
-        return `${SGR(colorToByte("cyan"))}[${preformatDate.getHours()}:${preformatDate.getMinutes()}]${SGR(0)}`
+        return `${SGR(colorToByte("cyan"))}[${preformatDate.getHours().toString().padStart(2, "0")}:${preformatDate.getMinutes().toString().padStart(2, "0")}]${SGR(0)}`
     }
 
     function handleCommand(text) {
@@ -106,7 +107,7 @@ const server = net.createServer(con => {
 
 
     con.on("data", chunk => {
-        date = new Date()
+        let date = new Date()
         users[currentCon].lastActivity = date
         console.log(`Han arribat dades. Connexió: ${currentCon}`)
         console.log(JSON.stringify(chunk.toString()))
@@ -133,4 +134,7 @@ server.listen(8000)
 - better format for oneself
 - Log segons usuari
 - Comanda de DMs
+- English and stuff
+- mostrar IP i port a la llista d'usuaris
+- robustesa
 */
