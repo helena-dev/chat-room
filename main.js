@@ -1,70 +1,81 @@
 const net = require("net");
 let conNum = 0
-let connections = []
-let nicknames = []
+let users = {}
 
 const server = net.createServer(con => {    
     console.log(`Ha arribat una connexió! El seu número és ${conNum}.`)
     let currentCon = `"Foo${conNum}"`
-    let bufCon = Buffer.from(currentCon)
-    nicknames.push(currentCon)
-    connections.push(con)
+    users[currentCon] = {
+        terminalNick: {
+            color: colorToByte("white")
+        },
+        connection: con,
+    }
     conNum++
-    con.write("Hewwo!\n" + `Ets l'usuari ${currentCon}\n`)
-    if(nicknames.length > 1) {
-        con.write("Els usuaris connectats són els següents:\n" + `${nicknames.filter(x => x !== currentCon).map(nick => ` - ${nick}`).join("\n")}\n`)
-
+    con.write("Hewwo!\r\n" + `Ets l'usuari ${currentCon}\r\n`)
+    const otherNicks = Object.keys(users).filter(x => x !== currentCon)
+    if(otherNicks != 0) {
+        con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(nick => ` - ${formatTerminalNick(nick)}`).join("\r\n")}\r\n`)
     } else {
-        con.write("De moment ets l'únic usuari connectat. Quan entri algú més, un avis apareixerà a la pantalla.\n")
-
+        con.write("De moment ets l'únic usuari connectat. Quan entri algú més, un avis apareixerà a la pantalla.\r\n")
     }
     function sendToOthers(text) {
+        const connections = Object.values(users).map(x => x.connection)
         connections.filter(x => x !== con).forEach(x => x.write(text))
     }
-    sendToOthers(`Ha arribat l'usuari ${currentCon}\n`)
+    sendToOthers(`Ha arribat l'usuari ${currentCon}\r\n`)
+
+    function colorToByte(text) {
+        text = text.toLowerCase()
+        const colorMappings = {
+            red: 0x31,
+            green: 0x32,
+            yellow: 0x33,
+            blue: 0x34,
+            magenta: 0x35,
+            cyan: 0x36,
+            white: 0x37,
+        }
+        if(text in colorMappings) {
+            return colorMappings[text]
+        } else {
+            con.write("Please select a valid color.\r\n")
+        }
+    }
+
+    function formatTerminalNick(userNick = currentCon) {
+        const normalBuf = Buffer.from([0x1b, 0x5b, 0x30, 0x6d])
+        const buf = Buffer.from([0x1b, 0x5b, 0x33, users[userNick].terminalNick.color, 0x6d])
+        return `${buf}${userNick}${normalBuf}`
+    }
 
     function handleCommand(text) {
         const match = /^([a-z]+)(?: +([a-z ]+)?)?$/i.exec(text)
         if(match === null) {
-            con.write("La comanda no és valida.\n") //TODO: Millorar missatge d'error
+            con.write("La comanda no és valida.\r\n") //TODO: Millorar missatge d'error
             return
         }
         const [command, arguments] = [match[1], match[2]]
         if(command === "nick") {
-            if(!nicknames.includes(arguments)) {
-                const oldNick = currentCon
-                currentCon = `"${arguments}"`
-                nicknames.push(currentCon)
-                nicknames = nicknames.filter(x => x !== oldNick)
-                sendToOthers(`L'usuari ${oldNick} s'ha canviat el nick a ${currentCon}.\n`)
-                con.write(`El teu usuari és ara ${currentCon}.\n`)
+            if(!(arguments in users)) {
+                const oldTerminalNick = formatTerminalNick()
+                const newNick = `"${arguments}"`
+                users[newNick] = users[currentCon]
+                delete users[currentCon]
+                currentCon = newNick
+                sendToOthers(`L'usuari ${oldTerminalNick} s'ha canviat el nick a ${formatTerminalNick()}.\r\n`)
+                con.write(`El teu usuari és ara ${formatTerminalNick()}.\r\n`)
             } else {
-                con.write("Aquest nom d'usuari ja existeix.\n")
+                con.write("Aquest nom d'usuari ja existeix.\r\n")
             }
         } 
         else if(command === "nickColor") {
-            switch(arguments.toLowerCase()) {
-                case "red":
-                    const buf = Buffer.from([0x5e, 0x5b, 0x5b, 0x33, 0x31, 0x6d]);
-                    bufCon = `${buf}${bufCon}`
-                    break;
-                case "green":
-                    break;
-                case "yellow":
-                    break;
-                case "blue":
-                    break;
-                case "magenta":
-                    break;
-                case "cyan":
-                    break;
-                case "white":
-                    break;
-                default:
-                    con.write("Please select a valid color.\n")
+            const color = colorToByte(arguments)
+            if(color) {
+                users[currentCon].terminalNick.color = color
             }
         } else{
-            con.write("La comanda no és valida.\n")
+            con.write("La comanda no és valida.\r\n")
         }
     }
 
@@ -76,15 +87,14 @@ const server = net.createServer(con => {
             input = input.substring(1)
             handleCommand(input)
         } else {
-            sendToOthers(`·${currentCon}: ${chunk}`)
+            sendToOthers(`·${formatTerminalNick()}: ${input}\r\n`)
         }
     })
 
     con.on("end",() => {
         console.log(`L'usuari ${currentCon} ha marxat. :(`)
-        connections = connections.filter(x => x !== con)
-        nicknames = nicknames.filter(x => x !== currentCon)
-        sendToOthers(`Ha marxat l'usuari ${currentCon}\n`)
+        sendToOthers(`Ha marxat l'usuari ${formatTerminalNick()}\r\n`)
+        delete users[currentCon]
     })
 })
 
