@@ -12,7 +12,7 @@ const server = net.createServer(con => {
         connection: con,
     }
     conNum++
-    con.write("Hewwo!\r\n" + `Ets l'usuari ${currentCon}.\r\n` + 'Input "/help" to get the help message for the different commands.')
+    con.write("Hewwo!\r\n" + `Ets l'usuari ${currentCon}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
     const otherNicks = Object.keys(users).filter(x => x !== currentCon)
     if(otherNicks != 0) {
         con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(nick => ` - ${formatTerminalNick(nick)}`).join("\r\n")}\r\n`)
@@ -54,7 +54,7 @@ const server = net.createServer(con => {
     }
 
     function handleCommand(text) {
-        const match = /^([a-z]+)(?: +([a-z ]+)?)?$/i.exec(text)
+        const match = /^([a-z]+)(?: +([a-z 0-9]+)?)?$/i.exec(text)
         if(match === null) {
             con.write("La comanda no és valida.\r\n") //TODO: Millorar missatge d'error
             return
@@ -112,7 +112,6 @@ server.listen(8000)
 
 /*TODO:
 - Constrasenyes
-- help command
 - better format for oneself
 - Log segons usuari
 - Comanda de DMs
