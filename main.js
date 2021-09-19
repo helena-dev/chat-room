@@ -128,13 +128,3 @@ const server = net.createServer(con => {
 })
 
 server.listen(8000)
-
-/*TODO:
-- Constrasenyes
-- better format for oneself
-- Log segons usuari
-- Comanda de DMs
-- English and stuff
-- mostrar IP i port a la llista d'usuaris
-- robustesa
-*/
