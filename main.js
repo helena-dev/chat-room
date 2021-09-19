@@ -2,12 +2,15 @@ const net = require("net");
 let conNum = 0
 let users = {}
 
+const CSI = '\u001b['
+const SGR = x => CSI + x + 'm'
+
 const server = net.createServer(con => {
     console.log(`Ha arribat una connexió! El seu número és ${conNum}.`)
     let currentCon = `Foo${conNum}`
     users[currentCon] = {
         terminalNick: {
-            color: randomInt(0x31, 0x36)
+            color: randomInt(31, 36)
         },
         connection: con,
         lastActivity: new Date()
@@ -19,7 +22,7 @@ const server = net.createServer(con => {
         const connections = Object.values(users).map(x => x.connection)
         connections.filter(x => x !== con).forEach(x => x.write(text))
     }
-    sendToOthers(`Ha arribat l'usuari ${currentCon}\r\n`)
+    sendToOthers(`Ha arribat l'usuari ${formatTerminalNick()}\r\n`)
 
     function randomInt(start, end) {
         return Math.floor(Math.random()*(end+1-start)+start)
@@ -38,13 +41,13 @@ const server = net.createServer(con => {
     function colorToByte(text) {
         text = text.toLowerCase()
         const colorMappings = {
-            red: 0x31,
-            green: 0x32,
-            yellow: 0x33,
-            blue: 0x34,
-            magenta: 0x35,
-            cyan: 0x36,
-            white: 0x37,
+            red: 31,
+            green: 32,
+            yellow: 33,
+            blue: 34,
+            magenta: 35,
+            cyan: 36,
+            white: 37,
         }
         if(text in colorMappings) {
             return colorMappings[text]
@@ -54,13 +57,14 @@ const server = net.createServer(con => {
     }
 
     function formatTerminalNick(userNick = currentCon) {
-        const normalBuf = Buffer.from([0x1b, 0x5b, 0x30, 0x6d])
-        const buf = Buffer.from([0x1b, 0x5b, 0x33, users[userNick].terminalNick.color, 0x6d])
-        return `${buf}"${userNick}"${normalBuf}`
+        const normalBuf = `${SGR(0)}`
+        const buf = `${SGR(users[userNick].terminalNick.color)}`
+        const bold = `${SGR(1)}`
+        return `${bold}${buf}"${userNick}"${normalBuf}`
     }
 
     function formatDate(preformatDate) {
-        return `[${preformatDate.getHours()}:${preformatDate.getMinutes()}]`
+        return `${SGR(colorToByte("cyan"))}[${preformatDate.getHours()}:${preformatDate.getMinutes()}]${SGR(0)}`
     }
 
     function handleCommand(text) {
@@ -89,10 +93,10 @@ const server = net.createServer(con => {
                 users[currentCon].terminalNick.color = color
             }
         } else if(command === "help") {
-            con.write("·/nick [newNick]: Used to change your nick. Two users cannot have the same nick.\r\n")
-            con.write("·/nickColor [newColor]: Used to change your nick's color. The available colors are: red, green, yellow, blue, magenta, cyan, and white.\r\n")
-            con.write("·/users: Prints the list of connected users (other than oneself).\r\n")
-            con.write("·/help: Shows and describes the available commands.\r\n")
+            con.write(` · ${SGR(1)}/nick [newNick]${SGR(0)}: Used to change your nick. Two users cannot have the same nick.\r\n`)
+            con.write(` · ${SGR(1)}/nickColor [newColor]${SGR(0)}: Used to change your nick's color. The available colors are: red, green, yellow, blue, magenta, cyan, and white.\r\n`)
+            con.write(` · ${SGR(1)}/users${SGR(0)}: Prints the list of connected users (other than oneself).\r\n`)
+            con.write(` · ${SGR(1)}/help${SGR(0)}: Shows and describes the available commands.\r\n`)
         } else if(command === "users") {
             printUserList()
         } else{
@@ -111,7 +115,7 @@ const server = net.createServer(con => {
             input = input.substring(1)
             handleCommand(input)
         } else {
-            sendToOthers(`·${formatDate(date)} ${formatTerminalNick()}: ${input}\r\n`)
+            sendToOthers(`${formatDate(date)} ${formatTerminalNick()}: ${input}\r\n`)
         }
     })
 
