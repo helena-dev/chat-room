@@ -29,10 +29,15 @@ const server = net.createServer(con => {
         return Math.floor(Math.random()*(end+1-start)+start)
     }
 
+    function filterEscapeCode (text) {
+        const isAllowed = x => x.charCodeAt(0) >= 0x20 && x.charCodeAt(0) !== 0x7F
+        return text.split("").filter(isAllowed).join("")
+    }
+
     function printUserList() {
         const otherNicks = Object.keys(users).filter(x => x !== currentCon)
         const formatEntry = nick => ` - ${formatTerminalNick(nick)} (Last Active on: ${formatDate(users[nick].lastActivity)})`;
-        if(otherNicks != 0) {
+        if(otherNicks != "") {
             con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(formatEntry).join("\r\n")}\r\n`)
         } else {
             con.write("De moment ets l'únic usuari connectat. Quan entri algú més, un avis apareixerà a la pantalla.\r\n")
@@ -65,7 +70,8 @@ const server = net.createServer(con => {
     }
 
     function formatDate(preformatDate) {
-        return `${SGR(colorToByte("cyan"))}[${preformatDate.getHours().toString().padStart(2, "0")}:${preformatDate.getMinutes().toString().padStart(2, "0")}]${SGR(0)}`
+        const formatNum = x => x.toString().padStart(2, "0")
+        return `${SGR(colorToByte("cyan"))}[${formatNum(preformatDate.getHours())}:${formatNum(preformatDate.getMinutes())}]${SGR(0)}`
     }
 
     function handleCommand(text) {
@@ -76,30 +82,44 @@ const server = net.createServer(con => {
         }
         const [command, arguments] = [match[1], match[2]]
         if(command === "nick") {
-            const oldTerminalNick = formatTerminalNick()
-            const newNick = `${arguments}`            
-            if(!(newNick in users)) {
-                users[newNick] = users[currentCon]
-                delete users[currentCon]
-                currentCon = newNick
-                sendToOthers(`L'usuari ${oldTerminalNick} s'ha canviat el nick a ${formatTerminalNick()}.\r\n`)
-                con.write(`El teu usuari és ara ${formatTerminalNick()}.\r\n`)
+            if(arguments) {
+                if(arguments.length <= 20) {
+                    const oldTerminalNick = formatTerminalNick()
+                    const newNick = `${arguments}`            
+                    if(!(newNick in users)) {
+                        users[newNick] = users[currentCon]
+                        delete users[currentCon]
+                        currentCon = newNick
+                        sendToOthers(`L'usuari ${oldTerminalNick} s'ha canviat el nick a ${formatTerminalNick()}.\r\n`)
+                        con.write(`El teu usuari és ara ${formatTerminalNick()}.\r\n`)
+                    } else {
+                        con.write("Aquest nom d'usuari ja existeix.\r\n")
+                    }
+                } else if (arguments.length > 20) {
+                    con.write("The maximum length of the nick is 20 characters.\r\n")
+                }
             } else {
-                con.write("Aquest nom d'usuari ja existeix.\r\n")
+                con.write("The nick has to contain characters other than just whitespace.\r\n")
             }
-        } 
-        else if(command === "nickColor") {
-            const color = colorToByte(arguments)
-            if(color) {
-                users[currentCon].terminalNick.color = color
+        } else if(command === "nickColor") {
+            if(arguments) {
+                const color = colorToByte(arguments)
+                if(color) {
+                    users[currentCon].terminalNick.color = color
+                }
+            } else {
+                con.write("The color name has to contain characters other than just whitespace.\r\n")
             }
         } else if(command === "help") {
             con.write(` · ${SGR(1)}/nick [newNick]${SGR(0)}: Used to change your nick. Two users cannot have the same nick.\r\n`)
             con.write(` · ${SGR(1)}/nickColor [newColor]${SGR(0)}: Used to change your nick's color. The available colors are: red, green, yellow, blue, magenta, cyan, and white.\r\n`)
             con.write(` · ${SGR(1)}/users${SGR(0)}: Prints the list of connected users (other than oneself).\r\n`)
+            con.write(` · ${SGR(1)}/buzz${SGR(0)}: Send a bell sound to the other users.\r\n`)
             con.write(` · ${SGR(1)}/help${SGR(0)}: Shows and describes the available commands.\r\n`)
         } else if(command === "users") {
             printUserList()
+        } else if (command === "buzz") {
+            sendToOthers("\u0007")
         } else{
             con.write("La comanda no és valida.\r\n")
         }
@@ -115,8 +135,12 @@ const server = net.createServer(con => {
         if(input[0] === "/") {
             input = input.substring(1)
             handleCommand(input)
-        } else {
-            sendToOthers(`${formatDate(date)} ${formatTerminalNick()}: ${input}\r\n`)
+        } else if(input != []) {
+            if(input.length <= 2000) {
+                sendToOthers(`${formatDate(date)} ${formatTerminalNick()}: ${filterEscapeCode(input)}\r\n`)
+            } else {
+                con.write("Messages have a maximim length of 2000 characters.\r\n")
+            }
         }
     })
 
