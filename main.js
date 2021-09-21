@@ -124,14 +124,30 @@ const server = net.createServer(con => {
             con.write("La comanda no és valida.\r\n")
         }
     }
-
-
+    
+    let chunkBuffer = Buffer.from([])
     con.on("data", chunk => {
+        chunkBuffer = Buffer.concat([chunkBuffer, chunk])
+        console.log(`Han arribat dades. Connexió: ${currentCon}`)
+        recieveChunk(chunkBuffer)
+    })
+    
+    function recieveChunk(rawChunk) {
+        for(i = 0; i < rawChunk.length; i++) {
+            if(rawChunk[i] == 0x0A) {
+                handleLine(rawChunk.slice(0,i))
+                rawChunk = rawChunk.slice(i+1, rawChunk.length)
+                chunkBuffer = Buffer.from([])
+                i = -1
+            }
+        }
+    }
+
+    function handleLine(chunkLine) {
         let date = new Date()
         users[currentCon].lastActivity = date
-        console.log(`Han arribat dades. Connexió: ${currentCon}`)
-        console.log(JSON.stringify(chunk.toString()))
-        let input = chunk.toString().trim()
+        console.log(JSON.stringify(chunkLine.toString()))
+        let input = chunkLine.toString().trim()
         if(input[0] === "/") {
             input = input.substring(1)
             handleCommand(input)
@@ -142,7 +158,7 @@ const server = net.createServer(con => {
                 con.write("Messages have a maximim length of 2000 characters.\r\n")
             }
         }
-    })
+    }
 
     con.on("end",() => {
         console.log(`L'usuari ${currentCon} ha marxat. :(`)
