@@ -1,19 +1,33 @@
-const net = require("net");
-const {randomInt, filterEscapeCode, LineSplitter, CSI, SGR,} = require("./utils")
+const net = require("net")
+const {randomInt, filterEscapeCode, LineSplitter, normalizeIP, CSI, SGR,} = require("./utils")
+const { IPinfoWrapper } = require("node-ipinfo")
+
+const ipinfo = new IPinfoWrapper(process.env.IPINFO_TOKEN)
+
 let conNum = 0
 let users = {}
 
 const server = net.createServer(con => {
-    console.log(`Ha arribat una connexió! El seu número és ${conNum}.`)
+    const normedIP = normalizeIP(con.remoteAddress)
+    console.log(`Ha arribat una connexió! El seu número és ${conNum}.\nLa seva IP i port són: ${normedIP}, ${con.remotePort}`)
     let currentCon = `Foo${conNum}`
-    users[currentCon] = {
+    conNum++
+    const connectionData = {
         terminalNick: {
             color: randomInt(31, 36)
         },
         connection: con,
-        lastActivity: new Date()
+        lastActivity: new Date(),
+        currentIP: null,
     }
-    conNum++
+    users[currentCon] = connectionData
+
+    ipinfo.lookupIp(normedIP)
+        .then(info => {
+            connectionData.currentIP = info
+            console.log(`Got geolocation info for connection ${currentCon}:`, info)
+        })
+
     con.write("Hewwo!\r\n" + `Ets l'usuari ${formatTerminalNick()}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
     printUserList()
     con.write("\r\n")
@@ -76,7 +90,7 @@ const server = net.createServer(con => {
                     const oldTerminalNick = formatTerminalNick()
                     const newNick = `${arguments}`            
                     if(!(newNick in users)) {
-                        users[newNick] = users[currentCon]
+                        users[newNick] = connectionData
                         delete users[currentCon]
                         currentCon = newNick
                         sendToOthers(`L'usuari ${oldTerminalNick} s'ha canviat el nick a ${formatTerminalNick()}.\r\n`)
@@ -94,7 +108,7 @@ const server = net.createServer(con => {
             if(arguments) {
                 const color = colorToByte(arguments)
                 if(color) {
-                    users[currentCon].terminalNick.color = color
+                    connectionData.terminalNick.color = color
                 }
             } else {
                 con.write("The color name has to contain characters other than just whitespace.\r\n")
@@ -122,7 +136,7 @@ const server = net.createServer(con => {
 
     lineSplitter.on("line", chunkLine => {
         let date = new Date()
-        users[currentCon].lastActivity = date
+        connectionData.lastActivity = date
         console.log(JSON.stringify(chunkLine.toString()))
         let input = chunkLine.toString().trim()
         if(input[0] === "/") {

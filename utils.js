@@ -28,6 +28,12 @@ class LineSplitter extends EventEmitter {
     }
 }
 
+function normalizeIP(text) {
+    text = text.toLowerCase()
+    const match = /^::ffff:((?:\d+\.){3}\d+)$/.exec(text)
+    return match ? match[1] : text
+}
+
 const CSI = '\u001b['
 const SGR = x => CSI + x + 'm'
 
@@ -35,6 +41,7 @@ module.exports = {
     randomInt,
     filterEscapeCode,
     LineSplitter,
+    normalizeIP,
     CSI,
     SGR,
 }
