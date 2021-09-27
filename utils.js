@@ -18,7 +18,7 @@ class LineSplitter extends EventEmitter {
     recieveChunk(rawChunk) {
         this.chunkBuffer = Buffer.concat([this.chunkBuffer, rawChunk])
         for(let i = 0; i < this.chunkBuffer.length; i++) {
-            if(this.chunkBuffer[i] == 0x0A) {
+            if(this.chunkBuffer[i] == 0x0A || this.chunkBuffer[i] == 0x0D) {
                 this.emit("line", this.chunkBuffer.slice(0,i))
                 this.chunkBuffer = this.chunkBuffer.slice(i+1, this.chunkBuffer.length)
                 this.chunkBuffer = Buffer.from([])

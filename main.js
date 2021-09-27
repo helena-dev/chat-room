@@ -2,7 +2,12 @@ const net = require("net")
 const {randomInt, filterEscapeCode, LineSplitter, normalizeIP, CSI, SGR,} = require("./utils")
 const { IPinfoWrapper } = require("node-ipinfo")
 
-const ipinfo = new IPinfoWrapper(process.env.IPINFO_TOKEN)
+let ipinfo;
+if(!process.env.IPINFO_TOKEN) {
+    throw "IPinfo token does not exist.\r\n"
+} else {
+    ipinfo = new IPinfoWrapper(process.env.IPINFO_TOKEN)
+}
 
 let conNum = 0
 let users = {}
@@ -158,4 +163,4 @@ const server = net.createServer(con => {
     })
 })
 
-server.listen(8000)
+server.listen(8000, () => console.log("The server is up and running."))
