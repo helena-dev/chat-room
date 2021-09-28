@@ -1,5 +1,6 @@
 const net = require("net")
 const {randomInt, filterEscapeCode, LineSplitter, normalizeIP, CSI, SGR,} = require("./utils")
+const {exceptionalReservationsToISO, isoAlpha2ToSymbols} = require("./geo")
 const { IPinfoWrapper } = require("node-ipinfo")
 
 let ipinfo;
@@ -42,9 +43,22 @@ const server = net.createServer(con => {
     }
     sendToOthers(`Ha arribat l'usuari ${formatTerminalNick()}\r\n`)
 
+    function formatUserLocation(user) {
+        const {region, countryCode, bogon, city} = user.currentIP || {}
+        if (bogon) {
+            return "(Local connection)"
+        } else if(countryCode) {
+            const ISO = (region && (region in exceptionalReservationsToISO)) ? exceptionalReservationsToISO[region] : countryCode
+            const symbols = isoAlpha2ToSymbols(ISO)
+            return city ? `(${symbols} ${city})` : `(${symbols})`
+        } else {
+            return "🏴‍☠️"
+        }
+    }
+
     function printUserList() {
         const otherNicks = Object.keys(users).filter(x => x !== currentCon)
-        const formatEntry = nick => ` - ${formatTerminalNick(nick)} (Last Active on: ${formatDate(users[nick].lastActivity)})`;
+        const formatEntry = nick => ` - ${formatTerminalNick(nick)} ${formatUserLocation(users[nick])} (Last Active on: ${formatDate(users[nick].lastActivity)})`;
         if(otherNicks != "") {
             con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(formatEntry).join("\r\n")}\r\n`)
         } else {
