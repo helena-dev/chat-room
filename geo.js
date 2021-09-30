@@ -19,7 +19,7 @@ const exceptionalReservationsToISO = {
 
 function isoAlpha2ToSymbols(code) {
     if (!/^[A-Z]{2}$/.test(code)) {
-      throw Error('must be an ISO 3166-1 alpha-2 code')
+      throw Error('Must be an ISO 3166-1 alpha-2 code.')
     }
     const diff = 0x1F1E6 - 0x41
     return [...code].map(x => String.fromCodePoint(x.charCodeAt(0) + diff)).join('')
