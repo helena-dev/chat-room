@@ -37,6 +37,40 @@ function normalizeIP(text) {
 const CSI = '\u001b['
 const SGR = x => CSI + x + 'm'
 
+function unbreakLines(text, num) {
+    const saveCursor = CSI + 's'
+    const restoreCursor = CSI + 'u'
+    const cursorUp = CSI + num + 'A'
+    const cursorDown = CSI + num + 'B'
+    const lineUp = CSI + "L"
+    let rn;
+    rn = "\r\n".repeat(num)
+    return `${saveCursor}${rn}${cursorUp}${lineUp}${text}${restoreCursor}${cursorDown}`
+
+}
+
+function wrapText(text) {
+    const length = text.length
+    const lineLength = 30
+    const padNum = 8
+    const numLines = (length>(lineLength-padNum) && length<=lineLength) ? 2 : Math.ceil(length/(lineLength))
+    console.log(numLines)
+    const textArray = text.split("")
+    const wrappedText = []
+    const endPadding = padNum
+    for(let i = 0; i < numLines; i++) {
+        let padding = (!i) ? 0 : padNum
+        let newLine = textArray.slice(i*lineLength-padding,(i+1)*lineLength-endPadding)
+        newLine.push("\r\n")
+        if(i!=0) newLine.unshift(" ".repeat(padding));
+        wrappedText.push(newLine)
+    }
+    wrappedText[wrappedText.length-1].pop()
+    console.log(wrappedText)
+    const wrappedString = wrappedText.flat().join("")
+    return [wrappedString, numLines]
+}
+
 module.exports = {
     randomInt,
     filterEscapeCode,
@@ -44,4 +78,6 @@ module.exports = {
     normalizeIP,
     CSI,
     SGR,
+    unbreakLines,
+    wrapText,
 }

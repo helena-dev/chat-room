@@ -1,5 +1,5 @@
 const net = require("net")
-const {randomInt, filterEscapeCode, LineSplitter, normalizeIP, CSI, SGR,} = require("./utils")
+const {randomInt, filterEscapeCode, LineSplitter, normalizeIP, CSI, SGR, unbreakLines, wrapText,} = require("./utils")
 const {exceptionalReservationsToISO, isoAlpha2ToSymbols} = require("./geo")
 const { IPinfoWrapper } = require("node-ipinfo")
 
@@ -163,7 +163,10 @@ const server = net.createServer(con => {
             handleCommand(input)
         } else if(input != []) {
             if(input.length <= 2000) {
-                sendToOthers(`${formatDate(date)} ${formatTerminalNick()}: ${filterEscapeCode(input)}\r\n`)
+                let dataString = `${formatDate(date)} ${formatTerminalNick()}: `
+                let messageString = wrapText(`${filterEscapeCode(input)}`)
+                sendToOthers(unbreakLines(`${dataString}${messageString[0]}\r\n`, messageString[1]))
+                //sendToOthers(wrapText(`${dataString}${filterEscapeCode(input)}\r\n`, dataString.length))
             } else {
                 con.write("Messages have a maximim length of 2000 characters.\r\n")
             }
