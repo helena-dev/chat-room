@@ -54,7 +54,6 @@ function wrapText(text) {
     const lineLength = 30
     const padNum = 8
     const numLines = (length>(lineLength-padNum) && length<=lineLength) ? 2 : Math.ceil(length/(lineLength))
-    console.log(numLines)
     const textArray = text.split("")
     const wrappedText = []
     const endPadding = padNum
@@ -66,7 +65,6 @@ function wrapText(text) {
         wrappedText.push(newLine)
     }
     wrappedText[wrappedText.length-1].pop()
-    console.log(wrappedText)
     const wrappedString = wrappedText.flat().join("")
     return [wrappedString, numLines]
 }
