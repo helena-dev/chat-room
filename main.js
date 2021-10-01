@@ -15,7 +15,7 @@ let users = {}
 
 const server = net.createServer(con => {
     const normedIP = normalizeIP(con.remoteAddress)
-    console.log(`Ha arribat una connexió! El seu número és ${conNum}.\nLa seva IP i port són: ${normedIP}, ${con.remotePort}`)
+    console.log(`A connection has arrived! Its number is ${conNum}.\nIts IP and port are: ${normedIP}, ${con.remotePort}`)
     let currentCon = `Foo${conNum}`
     conNum++
     const connectionData = {
@@ -34,14 +34,14 @@ const server = net.createServer(con => {
             console.log(`Got geolocation info for connection ${currentCon}:`, info)
         })
 
-    con.write("Hewwo!\r\n" + `Ets l'usuari ${formatTerminalNick()}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
+    con.write("Hewwo!\r\n" + `Your username is ${formatTerminalNick()}.\r\n` + 'Input "/help" to get the help message for the different commands.\r\n')
     printUserList()
     con.write("\r\n")
     function sendToOthers(text) {
         const connections = Object.values(users).map(x => x.connection)
         connections.filter(x => x !== con).forEach(x => x.write(text))
     }
-    sendToOthers(`Ha arribat l'usuari ${formatTerminalNick()}\r\n`)
+    sendToOthers(`User ${formatTerminalNick()} has arrived.\r\n`)
 
     function formatUserLocation(user) {
         const {region, countryCode, bogon, city} = user.currentIP || {}
@@ -60,9 +60,9 @@ const server = net.createServer(con => {
         const otherNicks = Object.keys(users).filter(x => x !== currentCon)
         const formatEntry = nick => ` - ${formatTerminalNick(nick)} ${formatUserLocation(users[nick])} (Last Active on: ${formatDate(users[nick].lastActivity)})`;
         if(otherNicks != "") {
-            con.write("Els usuaris connectats són els següents:\r\n" + `${otherNicks.map(formatEntry).join("\r\n")}\r\n`)
+            con.write("The online users are the following:\r\n" + `${otherNicks.map(formatEntry).join("\r\n")}\r\n`)
         } else {
-            con.write("De moment ets l'únic usuari connectat. Quan entri algú més, un avis apareixerà a la pantalla.\r\n")
+            con.write("Currently, you're the only connected user. When someone else comes online, a notification will appear on-screen.\r\n")
         }
     }
 
@@ -99,7 +99,7 @@ const server = net.createServer(con => {
     function handleCommand(text) {
         const match = /^([a-z]+)(?: +([a-z 0-9]+)?)?$/i.exec(text)
         if(match === null) {
-            con.write("La comanda no és valida.\r\n") //TODO: Millorar missatge d'error
+            con.write("The command is not valid.\r\n") //TODO: Millorar missatge d'error
             return
         }
         const [command, arguments] = [match[1], match[2]]
@@ -112,10 +112,10 @@ const server = net.createServer(con => {
                         users[newNick] = connectionData
                         delete users[currentCon]
                         currentCon = newNick
-                        sendToOthers(`L'usuari ${oldTerminalNick} s'ha canviat el nick a ${formatTerminalNick()}.\r\n`)
-                        con.write(`El teu usuari és ara ${formatTerminalNick()}.\r\n`)
+                        sendToOthers(`User ${oldTerminalNick} has changed their username to ${formatTerminalNick()}.\r\n`)
+                        con.write(`Your username is now ${formatTerminalNick()}.\r\n`)
                     } else {
-                        con.write("Aquest nom d'usuari ja existeix.\r\n")
+                        con.write("This username already exists.\r\n")
                     }
                 } else if (arguments.length > 20) {
                     con.write("The maximum length of the nick is 20 characters.\r\n")
@@ -143,13 +143,13 @@ const server = net.createServer(con => {
         } else if (command === "buzz") {
             sendToOthers("\u0007")
         } else{
-            con.write("La comanda no és valida.\r\n")
+            con.write("The command is not valid.\r\n")
         }
     }
 
     const lineSplitter = new LineSplitter()
     con.on("data", chunk => {
-        console.log(`Han arribat dades. Connexió: ${currentCon}`)
+        console.log(`Data has arrived. Connection: ${currentCon}`)
         lineSplitter.recieveChunk(chunk)
     })
 
@@ -174,8 +174,8 @@ const server = net.createServer(con => {
     })
 
     con.on("end",() => {
-        console.log(`L'usuari ${currentCon} ha marxat. :(`)
-        sendToOthers(`Ha marxat l'usuari ${formatTerminalNick()}\r\n`)
+        console.log(`User ${currentCon} has left. :(`)
+        sendToOthers(`User ${formatTerminalNick()} has disconnected.\r\n`)
         delete users[currentCon]
     })
 })
