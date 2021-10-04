@@ -42,10 +42,10 @@ function unbreakLines(text, num) {
     const restoreCursor = CSI + 'u'
     const cursorUp = CSI + num + 'A'
     const cursorDown = CSI + num + 'B'
-    const lineUp = CSI + "L"
+    const insertLineUp = CSI + num + "L"
     let rn;
     rn = "\r\n".repeat(num)
-    return `${saveCursor}${rn}${cursorUp}${lineUp}${text}${restoreCursor}${cursorDown}`
+    return `${saveCursor}${rn}${cursorUp}${insertLineUp}${text}${restoreCursor}${cursorDown}`
 
 }
 
