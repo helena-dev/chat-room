@@ -160,13 +160,14 @@ const server = net.createServer(con => {
         let input = chunkLine.toString().trim()
         if(input[0] === "/") {
             input = input.substring(1)
-            handleCommand(input)
-        } else if(input != []) {
+            return handleCommand(input)
+        }
+        input = filterEscapeCode(input)
+        if(input != []) {
             if(input.length <= 2000) {
                 let dataString = `${formatDate(date)} ${formatTerminalNick()}: `
-                let messageString = wrapText(`${filterEscapeCode(input)}`)
+                let messageString = wrapText(input)
                 sendToOthers(unbreakLines(`${dataString}${messageString[0]}\r\n`, messageString[1]))
-                //sendToOthers(wrapText(`${dataString}${filterEscapeCode(input)}\r\n`, dataString.length))
             } else {
                 con.write("Messages have a maximim length of 2000 characters.\r\n")
             }
