@@ -1,5 +1,7 @@
 {
   "dependencies": {
-    "node-ipinfo": "^3.0.0"
+    "@mdi/font": "^6.2.95",
+    "node-ipinfo": "^3.0.0",
+    "ws": "^8.2.3"
   }
 }

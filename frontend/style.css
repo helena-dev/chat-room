@@ -1,0 +1,128 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap');
+
+body {
+    background: rgb(9, 14, 17);
+    margin: 0px;
+}
+
+#app {
+    height: 800px;
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    background: rgb(42 47 50);
+    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', 'Helvetica', 'Lucida Grande', 'Arial', 'Ubuntu', 'Cantarell', 'Fira Sans', sans-serif;
+    color: rgba(241, 241, 242, 0.9);
+    line-height: 1.4;
+}
+
+#textField {
+    flex: 1;
+    overflow-y: scroll;
+    background: rgb(13, 20, 24);
+    background-image: url(assets/bkg_image_opacity.png);
+    background-repeat: repeat;
+    background-position: center;
+    display: flex;
+    padding-bottom: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+#topBar {
+    padding: 10px 16px;
+}
+
+#topBarTitle {
+    color: rgba(241, 241, 242, 0.92);
+    margin: 0;
+    font-weight: 500;
+    font-size: 16px;
+}
+
+#topBarText {
+    color: rgba(241, 241, 242, 0.63);
+    margin: 0;
+    font-size: 13px;
+    font-weight: 400;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+#messageField {
+    display: flex;
+    flex-direction: row;
+    font-size: 15px;
+    gap: 4px;
+    padding: 5px 10px;
+    background-color: rgb(30 36 40);
+}
+
+#textInput {
+    flex: 1;
+    padding: 9px 12px 9px;
+    border: 1px solid rgb(51, 56, 59);
+    background-color: rgb(51, 56, 59);
+    margin: 5px 10px 5px 0px;
+    font-size: 15px;
+    color: inherit;
+    outline: none;
+    border-radius: 30px;
+}
+
+#sendButton {
+    background-color: transparent;
+    border: none;
+    color: rgb(130 134 137);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+.message {
+    padding: 4px 8px 4px 8px;
+    background-color: rgb(38, 45, 49);
+    margin: 12px 10px 0px;
+    border-radius: 7.5px;
+    display: flex;
+    flex-direction: column;
+    max-width: 75%;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+}
+
+.message.own {
+    background-color: rgb(5, 97, 98);
+    align-self: flex-end;
+}
+
+.message-user {
+    font-weight: 500;
+    font-size: 14px;
+    color: orchid;
+}
+
+.message-text {}
+
+.message-timeStamp {
+    font-size: 12px;
+    color: rgba(241, 241, 242, 0.6);
+    text-align: right;
+}
+
+.message.followup {
+    margin-top: 3px;
+}
+
+#textField::-webkit-scrollbar {
+    width: 6px;
+}
+
+#textField::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+#textField::-webkit-scrollbar-thumb {
+    background-color: rgba(82, 82, 82, 0.7);
+    /*outline: 1px solid rgb(34, 34, 34);*/
+    border-radius: 10px;
+}
