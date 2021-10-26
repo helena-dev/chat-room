@@ -1,6 +1,7 @@
 console.log("Alba")
 const con = new WebSocket("ws://localhost:8080")
 con.onopen = () => console.log("Connected!")
+let lastMsgSender;
 con.onmessage = msgEvent => {
     const data = JSON.parse(msgEvent.data)
     console.log(data)
@@ -20,7 +21,14 @@ con.onmessage = msgEvent => {
 function recieveMessage(data) {
     const messageNode = document.createElement("div")
     messageNode.className = data.own ? "message own" : "message"
-    if (!data.own) {
+    let isFollowup;
+    if (lastMsgSender === data.from) {
+        messageNode.className += " followup"
+        isFollowup = true
+    } else{
+        isFollowup = false
+    }
+    if (!data.own && !isFollowup) {
         const spanUser = document.createElement("span")
         spanUser.className = "message-user"
         spanUser.innerText = data.from
@@ -38,6 +46,7 @@ function recieveMessage(data) {
     const currentScroll = textField.scrollTop + textField.clientHeight
     const currentHeight = textField.scrollHeight
     textField.appendChild(messageNode)
+    lastMsgSender = data.from
 
     if (currentScroll >= currentHeight - 20) {
         textField.scrollTop = textField.scrollHeight
