@@ -1,10 +1,9 @@
-const {randomInt, filterEscapeCode, LineSplitter, normalizeIP, CSI, SGR, unbreakLines, wrapText,} = require("./utils")
-const {exceptionalReservationsToISO, isoAlpha2ToSymbols} = require("./geo")
+const { exceptionalReservationsToISO, isoAlpha2ToSymbols } = require("./geo")
 const { IPinfoWrapper } = require("node-ipinfo")
 const { WebSocketServer } = require("ws")
 
 let ipinfo;
-if(!process.env.IPINFO_TOKEN) {
+if (!process.env.IPINFO_TOKEN) {
     throw "IPinfo token does not exist.\r\n"
 } else {
     ipinfo = new IPinfoWrapper(process.env.IPINFO_TOKEN)
@@ -28,17 +27,19 @@ server.on("connection", (con, request) => {
     users[currentCon] = connectionData
 
     function sendUserList() {
-        const data = {
-            type: "userList",
-            users: Object.entries(users).map(x =>{
-                return {
-                    name: x[0],
-                    lastActivity: x[1].lastActivity,
-                    own: x[1].connection === con,
-                }
-            })
+        for (const connectionData of Object.values(users)) {
+            const data = {
+                type: "userList",
+                users: Object.entries(users).map(x => {
+                    return {
+                        name: x[0],
+                        lastActivity: x[1].lastActivity,
+                        own: x[1].connection === connectionData.connection,
+                    }
+                })
+            }
+            connectionData.connection.send(JSON.stringify(data))
         }
-        con.send(JSON.stringify(data))
     }
     sendUserList()
     ipinfo.lookupIp(normedIP)
@@ -46,7 +47,7 @@ server.on("connection", (con, request) => {
             connectionData.currentIP = info
             console.log(`Got geolocation info for connection ${currentCon}:`, info)
         })
-    
+
     con.on("message", chunk => {
         const data = JSON.parse(chunk.toString())
         if (data.type === "message") {
@@ -65,9 +66,10 @@ server.on("connection", (con, request) => {
         }
     })
 
-    con.on("close",() => {
+    con.on("close", () => {
         console.log(`User ${currentCon} has left. :(`)
         delete users[currentCon]
+        sendUserList()
     })
 })
 
