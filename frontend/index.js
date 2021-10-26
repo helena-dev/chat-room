@@ -6,7 +6,9 @@ con.onmessage = msgEvent => {
     console.log(data)
     if (data.type === "userList") {
         const topBarText = document.querySelector("#topBarText")
-        topBarText.innerText = data.users.map(x => x.name).join(", ")
+        const otherUsers = data.users.filter(x => !x.own).map(x => x.name)
+        otherUsers.push("You")
+        topBarText.innerText = otherUsers.join(", ")
     } else if (data.type === "message") {
         recieveMessage(data)
     } else {
