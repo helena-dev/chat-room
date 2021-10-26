@@ -31,7 +31,7 @@ html, body, #container {
     flex: 1;
     overflow-y: scroll;
     background: rgb(13, 20, 24);
-    background-image: url(assets/bkg_image_opacity.png);
+    background-image: url(assets/bkg_image_opacity_006.png);
     background-repeat: repeat;
     background-position: center;
     display: flex;
