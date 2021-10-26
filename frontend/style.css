@@ -5,9 +5,20 @@ body {
     margin: 0px;
 }
 
+html, body, #container {
+    height: 100%;
+}
+
+#container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
 #app {
-    height: 800px;
-    width: 500px;
+    height: 100%;
+    width: 100%;
+    max-width: 850px;
     display: flex;
     flex-direction: column;
     background: rgb(42 47 50);
