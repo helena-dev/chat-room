@@ -1,6 +1,7 @@
 const { exceptionalReservationsToISO, isoAlpha2ToSymbols } = require("./geo")
 const { IPinfoWrapper } = require("node-ipinfo")
 const { WebSocketServer } = require("ws")
+const { normalizeIP} = require("./utils.js")
 
 let ipinfo;
 if (!process.env.IPINFO_TOKEN) {
