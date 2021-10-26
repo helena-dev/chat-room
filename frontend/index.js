@@ -60,11 +60,11 @@ const messageField = document.querySelector("#messageField")
 messageField.addEventListener("submit", (event) => {
     const text = textInput.value.trim()
     if (text) {
-    const data = {
-        type: "message",
+        const data = {
+            type: "message",
             text: text
-    }
-    con.send(JSON.stringify(data))
+        }
+        con.send(JSON.stringify(data))
     }
     textInput.value = ""
     event.preventDefault()
