@@ -112,7 +112,9 @@ html, body, #container {
     color: orchid;
 }
 
-.message-text {}
+.message-text {
+    white-space: break-spaces;
+}
 
 .message-timeStamp {
     font-size: 12px;
