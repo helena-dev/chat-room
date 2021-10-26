@@ -1,3 +1,4 @@
+import { formatDate } from "./utils.js"
 console.log("Alba")
 const con = new WebSocket("ws://localhost:8080")
 con.onopen = () => console.log("Connected!")
@@ -40,7 +41,8 @@ function recieveMessage(data) {
     messageNode.appendChild(spanText)
     const spanTime = document.createElement("span")
     spanTime.className = "message-timeStamp"
-    spanTime.innerText = data.date
+    const msgDate = new Date(data.date)
+    spanTime.innerText = formatDate(msgDate)
     messageNode.appendChild(spanTime)
 
     const currentScroll = textField.scrollTop + textField.clientHeight
