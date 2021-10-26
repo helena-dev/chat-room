@@ -58,11 +58,14 @@ function recieveMessage(data) {
 const textInput = document.querySelector("#textInput")
 const messageField = document.querySelector("#messageField")
 messageField.addEventListener("submit", (event) => {
+    const text = textInput.value.trim()
+    if (text) {
     const data = {
         type: "message",
-        text: textInput.value
+            text: text
     }
     con.send(JSON.stringify(data))
+    }
     textInput.value = ""
     event.preventDefault()
 })
