@@ -42,7 +42,22 @@ server.on("connection", (con, request) => {
             connectionData.connection.send(JSON.stringify(data))
         }
     }
+
+    function userNumChange(sign) {
+        const data = {
+            type: "userChange",
+            sign,
+            name: currentCon, 
+        }
+        for (const connectionData of Object.values(users)) {
+            data.own = (connectionData.connection === con)
+            connectionData.connection.send(JSON.stringify(data))
+        }
+    }
+
     sendUserList()
+    userNumChange("plus")
+
     ipinfo.lookupIp(normedIP)
         .then(info => {
             connectionData.currentIP = info
@@ -70,6 +85,7 @@ server.on("connection", (con, request) => {
     con.on("close", () => {
         console.log(`User ${currentCon} has left. :(`)
         delete users[currentCon]
+        userNumChange("minus")
         sendUserList()
     })
 })

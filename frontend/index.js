@@ -13,10 +13,33 @@ con.onmessage = msgEvent => {
         topBarText.innerText = otherUsers.join(", ")
     } else if (data.type === "message") {
         recieveMessage(data)
+    } else if (data.type === "userChange") {
+        changeUserNumToast(data)
     } else {
         throw Error("owo")
     }
-    return
+}
+
+function changeUserNumToast(data) {
+    const newUserNode = document.createElement("div")
+    newUserNode.className = "toast"
+    const toastText = document.createElement("span")
+    toastText.className = "toast-text"
+    if (data.sign === "plus") {
+        if (data.own) {
+            toastText.innerText = "You are now online"
+        } else {
+            toastText.innerText = `${data.name} has just arrived`
+        }
+    } else if (data.sign === "minus") {
+        if (!data.own) {
+            toastText.innerText = `${data.name} has left`
+        }
+    } else {
+        throw Error("owo")
+    }
+    newUserNode.appendChild(toastText)
+    textField.appendChild(newUserNode)
 }
 
 function recieveMessage(data) {
