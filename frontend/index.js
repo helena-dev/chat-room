@@ -82,6 +82,7 @@ const textInput = document.querySelector("#textInput")
 const messageField = document.querySelector("#messageField")
 messageField.addEventListener("submit", (event) => {
     textField.scrollTop = textField.scrollHeight
+    textInput.focus()
     const text = textInput.value.trim()
     if (text) {
         const data = {
