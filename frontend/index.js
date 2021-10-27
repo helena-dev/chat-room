@@ -3,18 +3,24 @@ console.log("Alba")
 const con = new WebSocket(`ws://${window.location.hostname}:8080`)
 con.onopen = () => console.log("Connected!")
 let lastMsgSender;
+let firstUsrLst = true
 con.onmessage = msgEvent => {
     const data = JSON.parse(msgEvent.data)
     console.log(data)
     if (data.type === "userList") {
+        if (firstUsrLst) {
+            const yourUser = data.users.filter(x => x.own).map(x => x.name)
+            nickInput.placeholder = yourUser
+            firstUsrLst = false
+        }
         const topBarText = document.querySelector("#topBarText")
         const otherUsers = data.users.filter(x => !x.own).map(x => x.name)
         otherUsers.push("You")
         topBarText.innerText = otherUsers.join(", ")
     } else if (data.type === "message") {
         recieveMessage(data)
-    } else if (data.type === "userChange") {
-        changeUserNumToast(data)
+    } else if (data.type === "toast") {
+        recieveToast(data)
     } else {
         throw Error("owo")
     }
@@ -30,22 +36,32 @@ function autoscroll(childNode) {
     }
 }
 
+function recieveToast(data) {
     const newUserNode = document.createElement("div")
     newUserNode.className = "toast"
     const toastText = document.createElement("span")
     toastText.className = "toast-text"
-    if (data.sign === "plus") {
-        if (data.own) {
-            toastText.innerText = "You are now online"
+    if (data.toast === "userChange") {
+        if (data.sign === "plus") {
+            if (data.own) {
+                toastText.innerText = "You are now online"
+            } else {
+                toastText.innerText = `${data.name} has just arrived`
+            }
+        } else if (data.sign === "minus") {
+            if (!data.own) {
+                toastText.innerText = `${data.name} has left`
+            }
         } else {
-            toastText.innerText = `${data.name} has just arrived`
+            throw Error("owo")
         }
-    } else if (data.sign === "minus") {
-        if (!data.own) {
-            toastText.innerText = `${data.name} has left`
+    } else if (data.toast === "nickChange") {
+        if (data.own) {
+            nickInput.placeholder = data.newName
+            toastText.innerText = `Your username is now: ${data.newName}`
+        } else {
+            toastText.innerText = `User "${data.oldName}" is now "${data.newName}"`
         }
-    } else {
-        throw Error("owo")
     }
     newUserNode.appendChild(toastText)
     autoscroll(newUserNode)
@@ -93,6 +109,22 @@ messageField.addEventListener("submit", (event) => {
         con.send(JSON.stringify(data))
     }
     textInput.value = ""
+    event.preventDefault()
+})
+
+const nickInput = document.querySelector("#nickInput")
+const nickField = document.querySelector("#nickField")
+nickField.addEventListener("submit", (event) => {
+    const text = nickInput.value.trim()
+    if (text && text != nickInput.placeholder) {
+        const data = {
+            type: "userName",
+            text: text
+        }
+        con.send(JSON.stringify(data))
+    }
+    nickInput.value = ""
+    textInput.focus()
     event.preventDefault()
 })
 

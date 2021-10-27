@@ -26,6 +26,24 @@ server.on("connection", (con, request) => {
         lastActivity: new Date(),
     }
     users[currentCon] = connectionData
+    function changeName(text) {
+        if ((text.length > 20) || (Object.keys(users)).includes(text)) return
+        const oldName = currentCon
+        users[text] = connectionData
+        delete users[oldName]
+        currentCon = text
+        sendUserList()
+        const data = {
+            type: "toast",
+            toast: "nickChange",
+            oldName,
+            newName: currentCon,
+        }
+        for (const connectionData of Object.values(users)) {
+            data.own = (connectionData.connection === con)
+            connectionData.connection.send(JSON.stringify(data))
+        }
+    }
 
     function sendUserList() {
         for (const connectionData of Object.values(users)) {
@@ -45,7 +63,8 @@ server.on("connection", (con, request) => {
 
     function userNumChange(sign) {
         const data = {
-            type: "userChange",
+            type: "toast",
+            toast: "userChange",
             sign,
             name: currentCon, 
         }
@@ -77,6 +96,8 @@ server.on("connection", (con, request) => {
                 }
                 connectionData.connection.send(JSON.stringify(sentData))
             }
+        } else if (data.type === "userName") {
+            changeName(data.text)
         } else {
             throw Error("owo")
         }

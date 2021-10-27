@@ -44,11 +44,17 @@ html, body, #container {
     padding: 10px 16px;
 }
 
+#topBarLine1 {
+    display: flex;
+    flex-direction: row;
+}
+
 #topBarTitle {
     color: rgba(241, 241, 242, 0.92);
     margin: 0;
     font-weight: 500;
     font-size: 16px;
+    flex: 100%;
 }
 
 #topBarText {
@@ -82,6 +88,29 @@ html, body, #container {
 }
 
 #sendButton {
+    background-color: transparent;
+    border: none;
+    color: rgb(130 134 137);
+    font-size: 20px;
+    cursor: pointer;
+}
+
+#nickField {
+    flex: none;
+}
+
+#nickInput {
+    padding: 4px 6px 4px;
+    border: 1px solid rgb(51, 56, 59);
+    background-color: rgb(51, 56, 59);
+    font-size: 15px;
+    color: inherit;
+    outline: none;
+    border-radius: 7.5px;
+    width: 135px
+}
+
+#nickButton{
     background-color: transparent;
     border: none;
     color: rgb(130 134 137);
