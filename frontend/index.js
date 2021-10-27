@@ -70,12 +70,10 @@ function recieveToast(data) {
 function recieveMessage(data) {
     const messageNode = document.createElement("div")
     messageNode.className = data.own ? "message own" : "message"
-    let isFollowup;
-    if (lastMsgSender === data.from) {
+    const isFollowup = (lastMsgSender === data.from);
+    lastMsgSender = data.from
+    if (isFollowup) {
         messageNode.className += " followup"
-        isFollowup = true
-    } else{
-        isFollowup = false
     }
     if (!data.own && !isFollowup) {
         const spanUser = document.createElement("span")
