@@ -64,6 +64,7 @@ function recieveToast(data) {
         }
     }
     newUserNode.appendChild(toastText)
+    lastMsgSender = undefined
     autoscroll(newUserNode)
 }
 
