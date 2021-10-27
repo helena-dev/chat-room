@@ -20,7 +20,16 @@ con.onmessage = msgEvent => {
     }
 }
 
-function changeUserNumToast(data) {
+function autoscroll(childNode) {
+    const currentScroll = textField.scrollTop + textField.clientHeight
+    const currentHeight = textField.scrollHeight
+    textField.appendChild(childNode)
+
+    if (currentScroll >= currentHeight - 20) {
+        textField.scrollTop = textField.scrollHeight
+    }
+}
+
     const newUserNode = document.createElement("div")
     newUserNode.className = "toast"
     const toastText = document.createElement("span")
@@ -39,7 +48,7 @@ function changeUserNumToast(data) {
         throw Error("owo")
     }
     newUserNode.appendChild(toastText)
-    textField.appendChild(newUserNode)
+    autoscroll(newUserNode)
 }
 
 function recieveMessage(data) {
@@ -67,15 +76,7 @@ function recieveMessage(data) {
     const msgDate = new Date(data.date)
     spanTime.innerText = formatDate(msgDate)
     messageNode.appendChild(spanTime)
-
-    const currentScroll = textField.scrollTop + textField.clientHeight
-    const currentHeight = textField.scrollHeight
-    textField.appendChild(messageNode)
-    lastMsgSender = data.from
-
-    if (currentScroll >= currentHeight - 20) {
-        textField.scrollTop = textField.scrollHeight
-    }
+    autoscroll(messageNode)
 }
 
 const textInput = document.querySelector("#textInput")
