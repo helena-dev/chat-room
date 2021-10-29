@@ -26,6 +26,9 @@ server.on("connection", (con, request) => {
         lastActivity: new Date(),
         colorNum: undefined,
         get cssColor () {
+            if (currentCon === process.env.SPECIAL_USER_COLOR) {
+                return "orchid"
+            }
             const i = this.colorNum
             if (i === 0) return 0
             const nearest = 2**Math.floor(Math.log2(i))
