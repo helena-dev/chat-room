@@ -98,6 +98,7 @@ function recieveMessage(data) {
         const spanUser = document.createElement("span")
         spanUser.className = "message-user"
         spanUser.innerText = data.from
+        spanUser.style.color = data.cssColor
         messageNode.appendChild(spanUser)
     }
     const spanText = document.createElement("span")

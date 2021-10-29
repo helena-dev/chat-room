@@ -24,8 +24,26 @@ server.on("connection", (con, request) => {
         connection: con,
         currentIP: null,
         lastActivity: new Date(),
+        colorNum: undefined,
+        get cssColor () {
+            const i = this.colorNum
+            if (i === 0) return 0
+            const nearest = 2**Math.floor(Math.log2(i))
+            const pos = (1 + 2*(i - nearest))  / (2*nearest)
+            return `hsl(${pos*360}, 100%, 50%)`
+        }
     }
     users[currentCon] = connectionData
+    const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
+    function findNum(set) {
+        for (let i = 0; true; i++) {
+            if(!set.has(i)) {
+                return i
+            }
+        }
+    }
+    users[currentCon].colorNum = findNum(colorNumSet)
+
     function changeName(text) {
         if ((text.length > 20) || (Object.keys(users)).includes(text)) return
         const oldName = currentCon
@@ -54,6 +72,7 @@ server.on("connection", (con, request) => {
                         name: x[0],
                         lastActivity: x[1].lastActivity,
                         own: x[1].connection === connectionData.connection,
+                        cssColor: x[1].cssColor
                     }
                 })
             }
@@ -86,15 +105,16 @@ server.on("connection", (con, request) => {
     con.on("message", chunk => {
         const data = JSON.parse(chunk.toString())
         if (data.type === "message") {
-            for (const connectionData of Object.values(users)) {
+            for (const targetConnectionData of Object.values(users)) {
                 const sentData = {
                     type: "message",
                     text: data.text,
-                    own: connectionData.connection === con,
+                    own: targetConnectionData.connection === con,
                     from: currentCon,
                     date: new Date(),
+                    cssColor: connectionData.cssColor,
                 }
-                connectionData.connection.send(JSON.stringify(sentData))
+                targetConnectionData.connection.send(JSON.stringify(sentData))
             }
         } else if (data.type === "userName") {
             changeName(data.text)
