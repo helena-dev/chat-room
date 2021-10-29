@@ -85,12 +85,10 @@ html, body, #container {
     color: inherit;
     outline: none;
     border-radius: 30px;
-}
-
-textarea {
     resize: none;
     overflow:hidden;
     box-sizing: border-box;
+    font-family: inherit;
 }
 
 #sendButton {
