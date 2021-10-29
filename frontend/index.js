@@ -1,5 +1,4 @@
 import { formatDate } from "./utils.js"
-console.log("Alba")
 const con = new WebSocket(`ws://${window.location.hostname}:8080`)
 con.onopen = () => console.log("Connected!")
 let lastMsgSender;
