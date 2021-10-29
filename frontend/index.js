@@ -4,6 +4,13 @@ const con = new WebSocket(`ws://${window.location.hostname}:8080`)
 con.onopen = () => console.log("Connected!")
 let lastMsgSender;
 let firstUsrLst = true
+const bell = new Audio("assets/bell.oga")
+let bellReady = false
+bell.addEventListener("canplaythrough", event => {
+    bellReady = true;
+})
+
+Notification.requestPermission()
 con.onmessage = msgEvent => {
     const data = JSON.parse(msgEvent.data)
     console.log(data)
@@ -18,6 +25,18 @@ con.onmessage = msgEvent => {
         otherUsers.push("You")
         topBarText.innerText = otherUsers.join(", ")
     } else if (data.type === "message") {
+        if (document.hidden) {
+            if (Notification.permission === "granted") {
+                const options = {
+                    body: data.text,
+                    renotify: true,
+                    tag: "msg",
+                }
+                const noti = new Notification(`${data.from}`, options)
+            } else if (bellReady) {
+                bell.play()
+            }
+        }
         recieveMessage(data)
     } else if (data.type === "toast") {
         recieveToast(data)
