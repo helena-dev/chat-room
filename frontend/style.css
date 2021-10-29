@@ -87,6 +87,12 @@ html, body, #container {
     border-radius: 30px;
 }
 
+textarea {
+    resize: none;
+    overflow:hidden;
+    box-sizing: border-box;
+}
+
 #sendButton {
     background-color: transparent;
     border: none;

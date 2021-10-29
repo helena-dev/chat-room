@@ -115,7 +115,8 @@ function recieveMessage(data) {
 
 const textInput = document.querySelector("#textInput")
 const messageField = document.querySelector("#messageField")
-messageField.addEventListener("submit", (event) => {
+
+function sendMessage() {
     textField.scrollTop = textField.scrollHeight
     textInput.focus()
     const text = textInput.value.trim()
@@ -127,7 +128,11 @@ messageField.addEventListener("submit", (event) => {
         con.send(JSON.stringify(data))
     }
     textInput.value = ""
+    textInput.style.height = "auto"
+}
+messageField.addEventListener("submit", (event) => {
     event.preventDefault()
+    sendMessage()
 })
 
 const nickInput = document.querySelector("#nickInput")
@@ -151,3 +156,15 @@ for (const child of Array.from(textField.children)) {
     textField.removeChild(child)
     console.log(child)
 }
+
+textInput.addEventListener("input", () => {
+    textInput.style.height = "auto"
+    textInput.style.height = (textInput.scrollHeight)+"px";
+})
+
+textInput.addEventListener("keydown", (event) => {
+    if(event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault()
+        sendMessage()
+    }
+})
