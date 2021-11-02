@@ -108,16 +108,26 @@ server.on("connection", (con, request) => {
     con.on("message", chunk => {
         const data = JSON.parse(chunk.toString())
         if (data.type === "message") {
-            for (const targetConnectionData of Object.values(users)) {
-                const sentData = {
-                    type: "message",
-                    text: data.text,
-                    own: targetConnectionData.connection === con,
-                    from: currentCon,
-                    date: new Date(),
-                    cssColor: connectionData.cssColor,
+            if (data.text.length <= 5000) {
+                for (const targetConnectionData of Object.values(users)) {
+                    const sentData = {
+                        type: "message",
+                        text: data.text,
+                        own: targetConnectionData.connection === con,
+                        from: currentCon,
+                        date: new Date(),
+                        cssColor: connectionData.cssColor,
+                    }
+                    targetConnectionData.connection.send(JSON.stringify(sentData))
                 }
-                targetConnectionData.connection.send(JSON.stringify(sentData))
+            } else {
+                const data = {
+                    type: "toast",
+                    toast: "punish",
+                    text: "Don't mess with the code. Bye."
+                }
+                con.send(JSON.stringify(data))
+                con.close()
             }
         } else if (data.type === "userName") {
             changeName(data.text)

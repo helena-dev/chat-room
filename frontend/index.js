@@ -80,6 +80,8 @@ function recieveToast(data) {
         } else {
             toastText.innerText = `User "${data.oldName}" is now "${data.newName}"`
         }
+    } else if (data.toast === "punish") {
+        toastText.innerText = data.text
     }
     newUserNode.appendChild(toastText)
     lastMsgSender = undefined
