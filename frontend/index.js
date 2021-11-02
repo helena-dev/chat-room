@@ -47,7 +47,9 @@ con.onmessage = msgEvent => {
 function autoscroll(childNode) {
     const currentScroll = textField.scrollTop + textField.clientHeight
     const currentHeight = textField.scrollHeight
-    textField.appendChild(childNode)
+    if (childNode) {
+        textField.appendChild(childNode)
+    }
 
     if (currentScroll >= currentHeight - 20) {
         textField.scrollTop = textField.scrollHeight
@@ -162,6 +164,7 @@ for (const child of Array.from(textField.children)) {
 textInput.addEventListener("input", () => {
     textInput.style.height = "auto"
     textInput.style.height = (textInput.scrollHeight)+"px";
+    autoscroll(false)
 })
 
 textInput.addEventListener("keydown", (event) => {
