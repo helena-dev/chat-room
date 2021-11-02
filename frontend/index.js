@@ -25,22 +25,34 @@ con.onmessage = msgEvent => {
         topBarText.innerText = otherUsers.join(", ")
     } else if (data.type === "message") {
         if (document.hidden) {
-            if (Notification.permission === "granted") {
-                const options = {
-                    body: data.text,
-                    renotify: true,
-                    tag: "msg",
-                }
-                const noti = new Notification(`${data.from}`, options)
-            } else if (bellReady) {
-                bell.play()
-            }
+            notification(data)
         }
         recieveMessage(data)
     } else if (data.type === "toast") {
         recieveToast(data)
     } else {
         throw Error("owo")
+    }
+}
+
+function notification(data) {
+    if ("Notification" in window && Notification.permission === "granted") {
+        const options = {
+            body: data.text,
+            renotify: true,
+            tag: "msg",
+        }
+        try {
+            const noti = new Notification(`${data.from}`, options)
+            return
+        } catch (error) {
+            if (!(error instanceof TypeError)) {
+                throw error
+            }
+        }
+    }
+    if (bellReady) {
+        bell.play()
     }
 }
 
