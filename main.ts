@@ -2,6 +2,7 @@ import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP} from "./utils.js"
+import type { BackMessage } from "./messages"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -16,6 +17,7 @@ interface ConnectionData {
     lastActivity: Date
     colorNum?: number
     get cssColor(): string
+    send(data: BackMessage): void
 }
 
 let conNum = 0
@@ -39,7 +41,10 @@ server.on("connection", (con, request) => {
             }
             const pos = getMagicColorSequence(this.colorNum)
             return `hsl(${pos*360}, 100%, 50%)`
-        }
+        },
+        send(data: BackMessage) {
+            this.connection.send(JSON.stringify(data))
+        },
     }
     users[currentCon] = connectionData
     const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
@@ -53,51 +58,47 @@ server.on("connection", (con, request) => {
     users[currentCon].colorNum = findNum(colorNumSet)
 
     function changeName(text: string) {
-        if ((text.length > 20) || (Object.keys(users)).includes(text)) return
+        if (text.length > 20) return punish()
+        if (text in users) return
         const oldName = currentCon
         users[text] = connectionData
         delete users[oldName]
         currentCon = text
         sendUserList()
-        const data = {
-            type: "toast",
-            toast: "nickChange",
-            oldName,
-            newName: currentCon,
-        }
         for (const connectionData of Object.values(users)) {
-            const realData = {...data, own: (connectionData.connection === con)}
-            connectionData.connection.send(JSON.stringify(realData))
+            connectionData.send({
+                type: "toast",
+                toast: "nickChange",
+                oldName,
+                newName: currentCon,
+                own: (connectionData.connection === con),
+            })
         }
     }
 
     function sendUserList() {
         for (const connectionData of Object.values(users)) {
-            const data = {
+            connectionData.send({
                 type: "userList",
-                users: Object.entries(users).map(x => {
-                    return {
-                        name: x[0],
-                        lastActivity: x[1].lastActivity,
-                        own: x[1].connection === connectionData.connection,
-                        cssColor: x[1].cssColor
-                    }
-                })
-            }
-            connectionData.connection.send(JSON.stringify(data))
+                users: Object.entries(users).map(x => ({
+                    name: x[0],
+                    lastActivity: x[1].lastActivity,
+                    own: x[1].connection === connectionData.connection,
+                    cssColor: x[1].cssColor
+                }))
+            })
         }
     }
 
     function userNumChange(sign: "plus" | "minus") {
-        const data = {
-            type: "toast",
-            toast: "userChange",
-            sign,
-            name: currentCon, 
-        }
         for (const connectionData of Object.values(users)) {
-            const realData = {...data, own: (connectionData.connection === con)}
-            connectionData.connection.send(JSON.stringify(realData))
+            connectionData.send({
+                type: "toast",
+                toast: "userChange",
+                sign,
+                name: currentCon,
+                own: (connectionData.connection === con),
+            })
         }
     }
 
@@ -113,26 +114,16 @@ server.on("connection", (con, request) => {
     con.on("message", chunk => {
         const data = JSON.parse(chunk.toString())
         if (data.type === "message") {
-            if (data.text.length <= 5000) {
-                for (const targetConnectionData of Object.values(users)) {
-                    const sentData = {
-                        type: "message",
-                        text: data.text,
-                        own: targetConnectionData.connection === con,
-                        from: currentCon,
-                        date: new Date(),
-                        cssColor: connectionData.cssColor,
-                    }
-                    targetConnectionData.connection.send(JSON.stringify(sentData))
-                }
-            } else {
-                const data = {
-                    type: "toast",
-                    toast: "punish",
-                    text: "Don't mess with the code. Bye."
-                }
-                con.send(JSON.stringify(data))
-                con.close()
+            if(data.text.length > 5000) return punish()
+            for (const targetConnectionData of Object.values(users)) {
+                targetConnectionData.send({
+                    type: "message",
+                    text: data.text,
+                    own: targetConnectionData.connection === con,
+                    from: currentCon,
+                    date: new Date(),
+                    cssColor: connectionData.cssColor,
+                })
             }
         } else if (data.type === "userName") {
             changeName(data.text)
@@ -140,6 +131,15 @@ server.on("connection", (con, request) => {
             throw Error("owo")
         }
     })
+
+    function punish() {
+        connectionData.send({
+            type: "toast",
+            toast: "punish",
+            text: "Don't mess with the code. Bye."
+        })
+        con.close()
+    }
 
     con.on("close", () => {
         console.log(`User ${currentCon} has left. :(`)
