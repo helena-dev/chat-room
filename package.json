@@ -3,5 +3,13 @@
     "@mdi/font": "^6.2.95",
     "node-ipinfo": "^3.0.0",
     "ws": "^8.2.3"
+  },
+  "devDependencies": {
+    "@types/ws": "^8.2.0",
+    "typescript": "^4.4.4"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/main"
   }
 }

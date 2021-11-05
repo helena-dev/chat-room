@@ -1,21 +1,23 @@
-const EventEmitter = require("events")
+import EventEmitter = require("events")
 
-function randomInt(start, end) {
+function randomInt(start: number, end: number): number {
     return Math.floor(Math.random()*(end+1-start)+start)
 }
 
-function filterEscapeCode (text) {
+function filterEscapeCode(text: string): string {
     const isAllowed = x => x.charCodeAt(0) >= 0x20 && x.charCodeAt(0) !== 0x7F
     return text.split("").filter(isAllowed).join("")
 }
 
 class LineSplitter extends EventEmitter {
+    chunkBuffer: Buffer
+
     constructor() {
         super()
         this.chunkBuffer = Buffer.from([])
     }
 
-    recieveChunk(rawChunk) {
+    recieveChunk(rawChunk: Buffer) {
         this.chunkBuffer = Buffer.concat([this.chunkBuffer, rawChunk])
         for(let i = 0; i < this.chunkBuffer.length; i++) {
             if(this.chunkBuffer[i] == 0x0A || this.chunkBuffer[i] == 0x0D) {
@@ -28,28 +30,33 @@ class LineSplitter extends EventEmitter {
     }
 }
 
-function normalizeIP(text) {
+function getMagicColorSequence(i: number): number {
+    if (i === 0) return 0
+    const nearest = 2**Math.floor(Math.log2(i))
+    return (1 + 2*(i - nearest)) / (2*nearest)
+}
+
+function normalizeIP(text: string): string {
     text = text.toLowerCase()
     const match = /^::ffff:((?:\d+\.){3}\d+)$/.exec(text)
     return match ? match[1] : text
 }
 
 const CSI = '\u001b['
-const SGR = x => CSI + x + 'm'
+const SGR = (x: string | number): string => CSI + x + 'm'
 
-function unbreakLines(text, num) {
+function unbreakLines(text: string, num: number): string {
     const saveCursor = CSI + 's'
     const restoreCursor = CSI + 'u'
     const cursorUp = CSI + num + 'A'
     const cursorDown = CSI + num + 'B'
     const insertLineUp = CSI + num + "L"
-    let rn;
-    rn = "\r\n".repeat(num)
+    const rn = "\r\n".repeat(num)
     return `${saveCursor}${rn}${cursorUp}${insertLineUp}${text}${restoreCursor}${cursorDown}`
 
 }
 
-function wrapText(text) {
+function wrapText(text: string): [string, number] {
     const length = text.length
     const lineLength = 30
     const padNum = 8
@@ -69,7 +76,7 @@ function wrapText(text) {
     return [wrappedString, numLines]
 }
 
-module.exports = {
+export {
     randomInt,
     filterEscapeCode,
     LineSplitter,
@@ -78,4 +85,5 @@ module.exports = {
     SGR,
     unbreakLines,
     wrapText,
+    getMagicColorSequence,
 }

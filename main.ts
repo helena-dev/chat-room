@@ -1,17 +1,25 @@
-const { exceptionalReservationsToISO, isoAlpha2ToSymbols } = require("./geo")
-const { IPinfoWrapper } = require("node-ipinfo")
-const { WebSocketServer } = require("ws")
-const { normalizeIP} = require("./utils.js")
+import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
+import { IPinfo, IPinfoWrapper } from "node-ipinfo"
+import { WebSocket, WebSocketServer } from "ws"
+import { getMagicColorSequence, normalizeIP} from "./utils.js"
 
-let ipinfo;
+let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
     throw "IPinfo token does not exist.\r\n"
 } else {
     ipinfo = new IPinfoWrapper(process.env.IPINFO_TOKEN)
 }
 
+interface ConnectionData {
+    connection: WebSocket
+    currentIP?: IPinfo
+    lastActivity: Date
+    colorNum?: number
+    get cssColor(): string
+}
+
 let conNum = 0
-let users = {}
+let users: {[key: string]: ConnectionData} = {}
 
 const server = new WebSocketServer({ port: 8080 });
 server.on("connection", (con, request) => {
@@ -20,25 +28,22 @@ server.on("connection", (con, request) => {
     console.log(`A connection has arrived! Its number is ${conNum}.\nIts IP and port are: ${normedIP}, ${socket.remotePort}`)
     let currentCon = `Foo${conNum}`
     conNum++
-    const connectionData = {
+    const connectionData: ConnectionData = {
         connection: con,
-        currentIP: null,
+        currentIP: undefined,
         lastActivity: new Date(),
         colorNum: undefined,
         get cssColor () {
             if (currentCon === process.env.SPECIAL_USER_COLOR) {
                 return "orchid"
             }
-            const i = this.colorNum
-            if (i === 0) return 0
-            const nearest = 2**Math.floor(Math.log2(i))
-            const pos = (1 + 2*(i - nearest))  / (2*nearest)
+            const pos = getMagicColorSequence(this.colorNum)
             return `hsl(${pos*360}, 100%, 50%)`
         }
     }
     users[currentCon] = connectionData
     const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
-    function findNum(set) {
+    function findNum(set: Set<number>) {
         for (let i = 0; true; i++) {
             if(!set.has(i)) {
                 return i
@@ -47,7 +52,7 @@ server.on("connection", (con, request) => {
     }
     users[currentCon].colorNum = findNum(colorNumSet)
 
-    function changeName(text) {
+    function changeName(text: string) {
         if ((text.length > 20) || (Object.keys(users)).includes(text)) return
         const oldName = currentCon
         users[text] = connectionData
@@ -61,8 +66,8 @@ server.on("connection", (con, request) => {
             newName: currentCon,
         }
         for (const connectionData of Object.values(users)) {
-            data.own = (connectionData.connection === con)
-            connectionData.connection.send(JSON.stringify(data))
+            const realData = {...data, own: (connectionData.connection === con)}
+            connectionData.connection.send(JSON.stringify(realData))
         }
     }
 
@@ -83,7 +88,7 @@ server.on("connection", (con, request) => {
         }
     }
 
-    function userNumChange(sign) {
+    function userNumChange(sign: "plus" | "minus") {
         const data = {
             type: "toast",
             toast: "userChange",
@@ -91,8 +96,8 @@ server.on("connection", (con, request) => {
             name: currentCon, 
         }
         for (const connectionData of Object.values(users)) {
-            data.own = (connectionData.connection === con)
-            connectionData.connection.send(JSON.stringify(data))
+            const realData = {...data, own: (connectionData.connection === con)}
+            connectionData.connection.send(JSON.stringify(realData))
         }
     }
 
