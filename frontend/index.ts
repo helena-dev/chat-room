@@ -1,7 +1,9 @@
 import { formatDate } from "./utils.js"
+import type { BackMessage, RecievedMessage, Toast } from "../messages"
+
 const con = new WebSocket(`ws://${window.location.hostname}:8080`)
 con.onopen = () => console.log("Connected!")
-let lastMsgSender;
+let lastMsgSender: string | undefined;
 let firstUsrLst = true
 const bell = new Audio("assets/bell.oga")
 let bellReady = false
@@ -11,15 +13,15 @@ bell.addEventListener("canplaythrough", event => {
 
 Notification.requestPermission()
 con.onmessage = msgEvent => {
-    const data = JSON.parse(msgEvent.data)
+    const data: BackMessage = JSON.parse(msgEvent.data)
     console.log(data)
     if (data.type === "userList") {
         if (firstUsrLst) {
-            const yourUser = data.users.filter(x => x.own).map(x => x.name)
+            const yourUser = data.users.filter(x => x.own).map(x => x.name)[0]
             nickInput.placeholder = yourUser
             firstUsrLst = false
         }
-        const topBarText = document.querySelector("#topBarText")
+        const topBarText: HTMLParagraphElement = document.querySelector("#topBarText")!
         const otherUsers = data.users.filter(x => !x.own).map(x => x.name)
         otherUsers.push("You")
         topBarText.innerText = otherUsers.join(", ")
@@ -35,7 +37,7 @@ con.onmessage = msgEvent => {
     }
 }
 
-function notification(data) {
+function notification(data: RecievedMessage) {
     if ("Notification" in window && Notification.permission === "granted") {
         const options = {
             body: data.text,
@@ -56,7 +58,7 @@ function notification(data) {
     }
 }
 
-function autoscroll(childNode) {
+function autoscroll(childNode?: HTMLElement) {
     const currentScroll = textField.scrollTop + textField.clientHeight
     const currentHeight = textField.scrollHeight
     if (childNode) {
@@ -68,7 +70,7 @@ function autoscroll(childNode) {
     }
 }
 
-function recieveToast(data) {
+function recieveToast(data: Toast) {
     const newUserNode = document.createElement("div")
     newUserNode.className = "toast"
     const toastText = document.createElement("span")
@@ -102,7 +104,7 @@ function recieveToast(data) {
     autoscroll(newUserNode)
 }
 
-function recieveMessage(data) {
+function recieveMessage(data: RecievedMessage) {
     const messageNode = document.createElement("div")
     messageNode.className = data.own ? "message own" : "message"
     const isFollowup = (lastMsgSender === data.from);
@@ -129,8 +131,8 @@ function recieveMessage(data) {
     autoscroll(messageNode)
 }
 
-const textInput = document.querySelector("#textInput")
-const messageField = document.querySelector("#messageField")
+const textInput: HTMLTextAreaElement = document.querySelector("#textInput")!
+const messageField: HTMLFormElement = document.querySelector("#messageField")!
 
 function sendMessage() {
     textField.scrollTop = textField.scrollHeight
@@ -151,8 +153,8 @@ messageField.addEventListener("submit", (event) => {
     sendMessage()
 })
 
-const nickInput = document.querySelector("#nickInput")
-const nickField = document.querySelector("#nickField")
+const nickInput: HTMLInputElement = document.querySelector("#nickInput")!
+const nickField: HTMLFormElement = document.querySelector("#nickField")!
 nickField.addEventListener("submit", (event) => {
     const text = nickInput.value.trim()
     if (text && text != nickInput.placeholder) {
@@ -167,7 +169,7 @@ nickField.addEventListener("submit", (event) => {
     event.preventDefault()
 })
 
-const textField = document.querySelector("#textField")
+const textField: HTMLDivElement = document.querySelector("#textField")!
 for (const child of Array.from(textField.children)) {
     textField.removeChild(child)
     console.log(child)
@@ -176,7 +178,7 @@ for (const child of Array.from(textField.children)) {
 textInput.addEventListener("input", () => {
     textInput.style.height = "auto"
     textInput.style.height = (textInput.scrollHeight)+"px";
-    autoscroll(false)
+    autoscroll()
 })
 
 textInput.addEventListener("keydown", (event) => {

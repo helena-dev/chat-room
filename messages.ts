@@ -1,8 +1,6 @@
 export type BackMessage =
     UserList |
-    UserNumChangeToast |
-    NickChangeToast |
-    PunishToast |
+    Toast |
     RecievedMessage
 
 export type FrontMessage =
@@ -20,24 +18,28 @@ export interface UserInfo {
     cssColor: string;
 }
 
-export interface UserNumChangeToast {
+export interface ToastBase {
     type: "toast";
+    toast: string;
+}
+
+export type Toast = UserNumChangeToast | NickChangeToast | PunishToast
+
+export interface UserNumChangeToast extends ToastBase {
     toast: "userChange";
     sign: "plus" | "minus";
     name: string;
     own: boolean;
 }
 
-export interface NickChangeToast {
-    type: "toast";
+export interface NickChangeToast extends ToastBase {
     toast: "nickChange";
     oldName: string;
     newName: string;
     own: boolean;
 }
 
-export interface PunishToast {
-    type: "toast";
+export interface PunishToast extends ToastBase {
     toast: "punish";
     text: string;
 }

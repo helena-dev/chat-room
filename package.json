@@ -5,11 +5,12 @@
     "ws": "^8.2.3"
   },
   "devDependencies": {
+    "@types/lru-cache": "^5.1.1",
     "@types/ws": "^8.2.0",
     "typescript": "^4.4.4"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && (cd frontend/; tsc)",
     "start": "node dist/main"
   }
 }

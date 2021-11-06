@@ -3,9 +3,9 @@
         "strict": true,
         "strictNullChecks": true,
         "target": "ES2018",
-        "moduleResolution": "node",
-        "module": "CommonJS",
+        "moduleResolution": "classic",
+        "module": "ES6",
         "outDir": "dist"
     },
-    "include": ["*.ts"]
+    "include": ["*.ts"] 
 }

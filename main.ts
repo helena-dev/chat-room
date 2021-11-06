@@ -15,7 +15,7 @@ interface ConnectionData {
     connection: WebSocket
     currentIP?: IPinfo
     lastActivity: Date
-    colorNum?: number
+    colorNum: number
     get cssColor(): string
     send(data: BackMessage): void
 }
@@ -26,15 +26,25 @@ let users: {[key: string]: ConnectionData} = {}
 const server = new WebSocketServer({ port: 8080 });
 server.on("connection", (con, request) => {
     const socket = request.socket
-    const normedIP = normalizeIP(socket.remoteAddress)
+    const normedIP = normalizeIP(socket.remoteAddress!)
     console.log(`A connection has arrived! Its number is ${conNum}.\nIts IP and port are: ${normedIP}, ${socket.remotePort}`)
     let currentCon = `Foo${conNum}`
     conNum++
+
+    const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
+    function findNum(set: Set<number>) {
+        for (let i = 0; true; i++) {
+            if(!set.has(i)) {
+                return i
+            }
+        }
+    }
+
     const connectionData: ConnectionData = {
         connection: con,
         currentIP: undefined,
         lastActivity: new Date(),
-        colorNum: undefined,
+        colorNum: findNum(colorNumSet),
         get cssColor () {
             if (currentCon === process.env.SPECIAL_USER_COLOR) {
                 return "orchid"
@@ -47,15 +57,6 @@ server.on("connection", (con, request) => {
         },
     }
     users[currentCon] = connectionData
-    const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
-    function findNum(set: Set<number>) {
-        for (let i = 0; true; i++) {
-            if(!set.has(i)) {
-                return i
-            }
-        }
-    }
-    users[currentCon].colorNum = findNum(colorNumSet)
 
     function changeName(text: string) {
         if (text.length > 20) return punish()

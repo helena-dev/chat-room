@@ -17,7 +17,7 @@ const exceptionalReservationsToISO = {
 
 }
 
-function isoAlpha2ToSymbols(code) {
+function isoAlpha2ToSymbols(code: string): string {
     if (!/^[A-Z]{2}$/.test(code)) {
       throw Error('Must be an ISO 3166-1 alpha-2 code.')
     }
@@ -25,7 +25,7 @@ function isoAlpha2ToSymbols(code) {
     return [...code].map(x => String.fromCodePoint(x.charCodeAt(0) + diff)).join('')
 }
 
-module.exports = {
+export {
     exceptionalReservationsToISO,
     isoAlpha2ToSymbols,
 }

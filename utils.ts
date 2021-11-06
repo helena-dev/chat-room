@@ -5,8 +5,8 @@ function randomInt(start: number, end: number): number {
 }
 
 function filterEscapeCode(text: string): string {
-    const isAllowed = x => x.charCodeAt(0) >= 0x20 && x.charCodeAt(0) !== 0x7F
-    return text.split("").filter(isAllowed).join("")
+    const isAllowed = (x: number) => x >= 0x20 && x !== 0x7F
+    return text.split("").filter(x => isAllowed(x.charCodeAt(0))).join("")
 }
 
 class LineSplitter extends EventEmitter {
