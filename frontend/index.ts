@@ -1,7 +1,10 @@
 import { formatDate } from "./utils.js"
-import type { BackMessage, RecievedMessage, Toast } from "../messages"
+import type { BackMessage, FrontMessage, RecievedMessage, Toast } from "../messages"
 
 const con = new WebSocket(`ws://${window.location.hostname}:8080`)
+function send(data: FrontMessage): void {
+    con.send(JSON.stringify(data))
+}
 con.onopen = () => console.log("Connected!")
 let lastMsgSender: string | undefined;
 let firstUsrLst = true
@@ -139,11 +142,10 @@ function sendMessage() {
     textInput.focus()
     const text = textInput.value.trim()
     if (text) {
-        const data = {
+        send({
             type: "message",
             text: text
-        }
-        con.send(JSON.stringify(data))
+        })
     }
     textInput.value = ""
     textInput.style.height = "auto"
@@ -158,11 +160,10 @@ const nickField: HTMLFormElement = document.querySelector("#nickField")!
 nickField.addEventListener("submit", (event) => {
     const text = nickInput.value.trim()
     if (text && text != nickInput.placeholder) {
-        const data = {
+        send({
             type: "userName",
             text: text
-        }
-        con.send(JSON.stringify(data))
+        })
     }
     nickInput.value = ""
     textInput.focus()

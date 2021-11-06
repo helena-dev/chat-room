@@ -4,7 +4,8 @@ export type BackMessage =
     RecievedMessage
 
 export type FrontMessage =
-    SentMessage
+    SentMessage |
+    UserNameSubmit
 
 export interface UserList {
     type: "userList";
@@ -55,5 +56,10 @@ export interface RecievedMessage {
 
 export interface SentMessage {
     type: "message";
+    text: string;
+}
+
+export interface UserNameSubmit {
+    type: "userName";
     text: string;
 }

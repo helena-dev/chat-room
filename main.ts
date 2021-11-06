@@ -2,7 +2,7 @@ import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP} from "./utils.js"
-import type { BackMessage } from "./messages"
+import type { BackMessage, FrontMessage } from "./messages"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -113,7 +113,7 @@ server.on("connection", (con, request) => {
         })
 
     con.on("message", chunk => {
-        const data = JSON.parse(chunk.toString())
+        const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
             if(data.text.length > 5000) return punish()
             for (const targetConnectionData of Object.values(users)) {
