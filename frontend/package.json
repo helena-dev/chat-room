@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@mdi/font": "^6.2.95",
+    "react": "^17.0.2"
+  },
+  "devDependencies": {
+    "typescript": "^4.4.4"
+  },
+  "scripts": {
+    "build": "tsc"
+  }
+}
