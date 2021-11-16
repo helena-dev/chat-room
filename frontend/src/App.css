@@ -5,17 +5,17 @@ body {
     margin: 0px;
 }
 
-html, body, #container {
+html, body, #root, .container {
     height: 100%;
 }
 
-#container {
+.container {
     display: flex;
     flex-direction: row;
     justify-content: center;
 }
 
-#app {
+.app {
     height: 100%;
     width: 100%;
     max-width: 850px;
@@ -27,7 +27,7 @@ html, body, #container {
     line-height: 1.4;
 }
 
-#textField {
+.textField {
     flex: 1;
     overflow-y: scroll;
     background: rgb(13, 20, 24);
@@ -40,16 +40,16 @@ html, body, #container {
     align-items: flex-start;
 }
 
-#topBar {
+.topBar {
     padding: 10px 16px;
 }
 
-#topBarLine1 {
+.topBarLine1 {
     display: flex;
     flex-direction: row;
 }
 
-#topBarTitle {
+.topBarTitle {
     color: rgba(241, 241, 242, 0.92);
     margin: 0;
     font-weight: 500;
@@ -57,7 +57,7 @@ html, body, #container {
     flex: 100%;
 }
 
-#topBarText {
+.topBarText {
     color: rgba(241, 241, 242, 0.63);
     margin: 0;
     font-size: 13px;
@@ -66,7 +66,7 @@ html, body, #container {
     hyphens: auto;
 }
 
-#messageField {
+.messageField {
     display: flex;
     flex-direction: row;
     font-size: 15px;
@@ -75,7 +75,7 @@ html, body, #container {
     background-color: rgb(30 36 40);
 }
 
-#textInput {
+.textInput {
     flex: 1;
     padding: 9px 12px 9px;
     border: 1px solid rgb(51, 56, 59);
@@ -91,7 +91,7 @@ html, body, #container {
     font-family: inherit;
 }
 
-#sendButton {
+.sendButton {
     background-color: transparent;
     border: none;
     color: rgb(130 134 137);
@@ -99,11 +99,11 @@ html, body, #container {
     cursor: pointer;
 }
 
-#nickField {
+.nickField {
     flex: none;
 }
 
-#nickInput {
+.nickInput {
     padding: 4px 6px 4px;
     border: 1px solid rgb(51, 56, 59);
     background-color: rgb(51, 56, 59);
@@ -114,7 +114,7 @@ html, body, #container {
     width: 135px
 }
 
-#nickButton{
+.nickButton{
     background-color: transparent;
     border: none;
     color: rgb(130 134 137);
@@ -169,15 +169,15 @@ html, body, #container {
     margin-top: 3px;
 }
 
-#textField::-webkit-scrollbar {
+.textField::-webkit-scrollbar {
     width: 6px;
 }
 
-#textField::-webkit-scrollbar-track {
+.textField::-webkit-scrollbar-track {
     box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
 }
 
-#textField::-webkit-scrollbar-thumb {
+.textField::-webkit-scrollbar-thumb {
     background-color: rgba(82, 82, 82, 0.7);
     border-radius: 10px;
 }
