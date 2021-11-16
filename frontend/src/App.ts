@@ -1,5 +1,7 @@
-import { formatDate } from "./utils.js"
-import type { BackMessage, FrontMessage, RecievedMessage, Toast } from "../messages"
+import { formatDate } from "./utils"
+import "@mdi/font/css/materialdesignicons.min.css"
+import "./App.css"
+import type { BackMessage, FrontMessage, RecievedMessage, Toast } from "../../messages"
 
 const con = new WebSocket(`ws://${window.location.hostname}:8080`)
 function send(data: FrontMessage): void {
@@ -48,7 +50,7 @@ function notification(data: RecievedMessage) {
             tag: "msg",
         }
         try {
-            const noti = new Notification(`${data.from}`, options)
+            new Notification(`${data.from}`, options)
             return
         } catch (error) {
             if (!(error instanceof TypeError)) {
@@ -159,7 +161,7 @@ const nickInput: HTMLInputElement = document.querySelector("#nickInput")!
 const nickField: HTMLFormElement = document.querySelector("#nickField")!
 nickField.addEventListener("submit", (event) => {
     const text = nickInput.value.trim()
-    if (text && text != nickInput.placeholder) {
+    if (text && text !== nickInput.placeholder) {
         send({
             type: "userName",
             text: text
