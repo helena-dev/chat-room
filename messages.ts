@@ -1,7 +1,7 @@
 export type BackMessage =
     UserList |
     Toast |
-    RecievedMessage
+    ReceivedMessage
 
 export type FrontMessage =
     SentMessage |
@@ -45,7 +45,7 @@ export interface PunishToast extends ToastBase {
     text: string;
 }
 
-export interface RecievedMessage {
+export interface ReceivedMessage {
     type: "message";
     text: string;
     own: boolean;
