@@ -8,3 +8,6 @@ export function formatDate(preformatDate: Date): string {
     return `${formatNum(preformatDate.getHours())}:${formatNum(preformatDate.getMinutes())}`
 }
 
+export function assertUnreachable(): never {
+    throw Error("owo")
+}
