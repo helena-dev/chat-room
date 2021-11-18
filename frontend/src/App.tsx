@@ -113,18 +113,6 @@ class App extends React.Component {
         textInput.style.height = "auto"
     }
 
-    autoscroll(childNode?: HTMLElement): void {
-        const textField = this.textFieldRef.current!
-        const currentScroll = textField.scrollTop + textField.clientHeight
-        const currentHeight = textField.scrollHeight
-        if (childNode) {
-            textField.appendChild(childNode)
-        }
-        if (currentScroll >= currentHeight - 20) {
-            textField.scrollTop = textField.scrollHeight
-        }
-    }
-
     render() {
         const { currentNick, currentUserList, messages } = this.state
 
@@ -210,10 +198,13 @@ class App extends React.Component {
         )
         
         const onTextInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
+            const currentScroll = this.preAutoscroll()
+            const borders = 2 // Border size (top +  bottom) in px. FIXME cause this is ugly
             event.currentTarget.style.height = "auto"
-            event.currentTarget.style.height = (event.currentTarget.scrollHeight) + "px";
-            this.autoscroll()
+            event.currentTarget.style.height = (event.currentTarget.scrollHeight + borders) + "px";
+            this.postAutoscroll(currentScroll)
         }
+
         const onTextKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault()
@@ -256,6 +247,27 @@ class App extends React.Component {
                 </div>
             </div >
         )
+    }
+
+    preAutoscroll() {
+        const textField = this.textFieldRef.current!
+        const maxScroll = textField.scrollHeight - (textField.clientHeight)
+        const currentScroll = maxScroll - textField.scrollTop
+        return currentScroll
+    }
+
+    postAutoscroll(snapshot: number) {
+        const textField = this.textFieldRef.current!
+        const maxScroll = textField.scrollHeight - (textField.clientHeight)
+        textField.scrollTop = maxScroll - snapshot
+    }
+
+    getSnapshotBeforeUpdate() {
+        return this.preAutoscroll()
+    }
+
+    componentDidUpdate(prevProps: {}, prevState: AppState, snapshot: number) {
+        this.postAutoscroll(snapshot)
     }
 }
 

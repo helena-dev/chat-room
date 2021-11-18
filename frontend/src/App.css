@@ -86,7 +86,7 @@ html, body, #root, .container {
     outline: none;
     border-radius: 19px;
     resize: none;
-    overflow:hidden;
+    overflow: hidden;
     box-sizing: border-box;
     font-family: inherit;
 }
