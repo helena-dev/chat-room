@@ -291,7 +291,7 @@ class App extends React.Component {
             } else if(countryCode) {
                 const ISO = (region && (region in exceptionalReservationsToISO)) ? exceptionalReservationsToISO[region] : countryCode
                 const symbols = isoAlpha2ToSymbols(ISO)
-                return city ? `(${symbols} ${city})` : `(${symbols})`
+                return city ? `${symbols}, ${city}` : `${symbols}`
             } else {
                 return "🏴‍☠️"
             }

@@ -1,6 +1,6 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { WebSocket, WebSocketServer } from "ws"
-import { getMagicColorSequence, normalizeIP} from "./utils.js"
+import { getMagicColorSequence, normalizeIP } from "./utils.js"
 import type { BackMessage, FrontMessage, IsOnlineCheck } from "./messages"
 
 let ipinfo: IPinfoWrapper;
@@ -21,7 +21,7 @@ interface ConnectionData {
 }
 
 let conNum = 0
-let users: {[key: string]: ConnectionData} = {}
+let users: { [key: string]: ConnectionData } = {}
 
 const server = new WebSocketServer({ port: 8080 });
 server.on("connection", (con, request) => {
@@ -34,7 +34,7 @@ server.on("connection", (con, request) => {
     const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
     function findNum(set: Set<number>) {
         for (let i = 0; true; i++) {
-            if(!set.has(i)) {
+            if (!set.has(i)) {
                 return i
             }
         }
@@ -46,12 +46,12 @@ server.on("connection", (con, request) => {
         lastActivity: new Date(),
         online: true,
         colorNum: findNum(colorNumSet),
-        get cssColor () {
+        get cssColor() {
             if (currentCon === process.env.SPECIAL_USER_COLOR) {
                 return "orchid"
             }
             const pos = getMagicColorSequence(this.colorNum)
-            return `hsl(${pos*360}, 100%, 50%)`
+            return `hsl(${pos * 360}, 100%, 50%)`
         },
         send(data: BackMessage) {
             this.connection.send(JSON.stringify(data))
@@ -80,23 +80,26 @@ server.on("connection", (con, request) => {
 
     function sendUserList() {
         for (const connectionData of Object.values(users)) {
-            const {region, countryCode, city} = connectionData.currentIP || {}
-            const { bogon } = (connectionData.currentIP as any || {})
             connectionData.send({
                 type: "userList",
-                users: Object.entries(users).map(x => ({
-                    name: x[0],
-                    lastActivity: x[1].lastActivity,
-                    online: x[1].online,
-                    own: x[1].connection === connectionData.connection,
-                    cssColor: x[1].cssColor,
-                    ipInfo: {
-                        region,
-                        countryCode,
-                        city,
-                        bogon,
+                users: Object.entries(users).map(x => {
+                    const { region, countryCode, city } = x[1].currentIP || {}
+                    const { bogon } = (x[1].currentIP as any || {})
+                    const { lastActivity, online, cssColor } = x[1]
+                    return {
+                        name: x[0],
+                        lastActivity,
+                        online,
+                        own: x[1].connection === connectionData.connection,
+                        cssColor,
+                        ipInfo: {
+                            region,
+                            countryCode,
+                            city,
+                            bogon,
+                        }
                     }
-                }))
+                })
             })
         }
     }
@@ -126,7 +129,7 @@ server.on("connection", (con, request) => {
     con.on("message", chunk => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
-            if(data.text.length > 5000) return punish()
+            if (data.text.length > 5000) return punish()
             for (const targetConnectionData of Object.values(users)) {
                 targetConnectionData.send({
                     type: "message",
