@@ -1,7 +1,7 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP } from "./utils.js"
-import type { BackMessage, FrontMessage, IsOnlineCheck } from "./messages"
+import type { BackMessage, FrontMessage } from "./messages"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -144,6 +144,7 @@ server.on("connection", (con, request) => {
             changeName(data.text)
         } else if (data.type === "isOnline") {
             connectionData.online = data.online
+            connectionData.lastActivity= new Date()
             sendUserList()
         } else if (data.type === "typing") {
             for (const targetConnectionData of Object.values(users)) {

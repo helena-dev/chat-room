@@ -56,7 +56,7 @@ class App extends React.Component {
     componentWillUnmount() {
         this.con?.close()
         window.removeEventListener("focus", this.onFocus)
-        window.removeEventListener("focus", this.onBlur)
+        window.removeEventListener("blur", this.onBlur)
         for (const [key, value] of this.state.typingUsers) {
             clearTimeout(value)
         }
