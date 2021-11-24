@@ -28,7 +28,7 @@ class App extends React.Component {
     nickInputRef = React.createRef<HTMLInputElement>()
 
     componentDidMount() {
-        this.con = new WebSocket(`ws://${window.location.hostname}:8080`)
+        this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
         this.con.onmessage = (event) => this.receive(event)
 
         this.bell = new Audio("assets/bell.oga")
