@@ -1,8 +1,7 @@
-import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP} from "./utils.js"
-import type { BackMessage, FrontMessage } from "./messages"
+import type { BackMessage, FrontMessage, IsOnlineCheck } from "./messages"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -15,6 +14,7 @@ interface ConnectionData {
     connection: WebSocket
     currentIP?: IPinfo
     lastActivity: Date
+    online: boolean
     colorNum: number
     get cssColor(): string
     send(data: BackMessage): void
@@ -44,6 +44,7 @@ server.on("connection", (con, request) => {
         connection: con,
         currentIP: undefined,
         lastActivity: new Date(),
+        online: true,
         colorNum: findNum(colorNumSet),
         get cssColor () {
             if (currentCon === process.env.SPECIAL_USER_COLOR) {
@@ -79,13 +80,22 @@ server.on("connection", (con, request) => {
 
     function sendUserList() {
         for (const connectionData of Object.values(users)) {
+            const {region, countryCode, city} = connectionData.currentIP || {}
+            const { bogon } = (connectionData.currentIP as any || {})
             connectionData.send({
                 type: "userList",
                 users: Object.entries(users).map(x => ({
                     name: x[0],
                     lastActivity: x[1].lastActivity,
+                    online: x[1].online,
                     own: x[1].connection === connectionData.connection,
-                    cssColor: x[1].cssColor
+                    cssColor: x[1].cssColor,
+                    ipInfo: {
+                        region,
+                        countryCode,
+                        city,
+                        bogon,
+                    }
                 }))
             })
         }
@@ -110,6 +120,7 @@ server.on("connection", (con, request) => {
         .then(info => {
             connectionData.currentIP = info
             console.log(`Got geolocation info for connection ${currentCon}:`, info)
+            sendUserList()
         })
 
     con.on("message", chunk => {
@@ -128,6 +139,16 @@ server.on("connection", (con, request) => {
             }
         } else if (data.type === "userName") {
             changeName(data.text)
+        } else if (data.type === "isOnline") {
+            connectionData.online = data.online
+            sendUserList()
+        } else if (data.type === "typing") {
+            for (const targetConnectionData of Object.values(users)) {
+                targetConnectionData.send({
+                    type: "typing",
+                    from: currentCon,
+                })
+            }
         } else {
             throw Error("owo")
         }

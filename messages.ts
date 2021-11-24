@@ -1,11 +1,14 @@
 export type BackMessage =
     UserList |
     Toast |
-    ReceivedMessage
+    ReceivedMessage |
+    UserTyping
 
 export type FrontMessage =
     SentMessage |
-    UserNameSubmit
+    UserNameSubmit |
+    IsOnlineCheck |
+    IsTyping
 
 export interface UserList {
     type: "userList";
@@ -15,8 +18,15 @@ export interface UserList {
 export interface UserInfo {
     name: string;
     lastActivity: Date;
+    online: boolean;
     own: boolean;
     cssColor: string;
+    ipInfo: {
+        region?: string,
+        countryCode?: string,
+        city?: string,
+        bogon?: boolean,
+    }
 }
 
 export interface ToastBase {
@@ -62,4 +72,18 @@ export interface SentMessage {
 export interface UserNameSubmit {
     type: "userName";
     text: string;
+}
+
+export interface IsOnlineCheck {
+    type: "isOnline";
+    online: boolean;
+}
+
+export interface IsTyping {
+    type: "typing";
+}
+
+export interface UserTyping {
+    type: "typing";
+    from: string;
 }

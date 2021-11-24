@@ -13,6 +13,8 @@ html, body, #root, .container {
     display: flex;
     flex-direction: row;
     justify-content: center;
+    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', 'Helvetica', 'Lucida Grande', 'Arial', 'Ubuntu', 'Cantarell', 'Fira Sans', sans-serif;
+
 }
 
 .app {
@@ -21,8 +23,7 @@ html, body, #root, .container {
     max-width: 850px;
     display: flex;
     flex-direction: column;
-    background: rgb(42 47 50);
-    font-family: 'Roboto', 'Segoe UI', 'Helvetica Neue', 'Helvetica', 'Lucida Grande', 'Arial', 'Ubuntu', 'Cantarell', 'Fira Sans', sans-serif;
+    background: rgb(42, 47, 50);
     color: rgba(241, 241, 242, 0.9);
     line-height: 1.4;
 }
@@ -42,6 +43,11 @@ html, body, #root, .container {
 
 .topBar {
     padding: 10px 16px;
+    box-sizing: border-box;
+}
+
+.topBar, .upperSidePanel {
+    height: 66px;
 }
 
 .topBarLine1 {
@@ -62,8 +68,11 @@ html, body, #root, .container {
     margin: 0;
     font-size: 13px;
     font-weight: 400;
-    overflow-wrap: anywhere;
     hyphens: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 60%;
 }
 
 .messageField {
@@ -101,6 +110,7 @@ html, body, #root, .container {
 
 .nickField {
     flex: none;
+    display: flex;
 }
 
 .nickInput {
@@ -120,6 +130,9 @@ html, body, #root, .container {
     color: rgb(130 134 137);
     font-size: 20px;
     cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
 }
 
 .message {
@@ -211,4 +224,102 @@ html, body, #root, .container {
     font-size: 12.5px;
     line-height: 21px;
     color: rgba(241, 241, 242, 0.92);
+}
+
+.sidePanel {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    width: 160px;
+    background: rgb(5, 97, 98);
+    box-sizing: border-box;
+}
+
+.upperSidePanel {
+    display: flex;
+    background-color: rgb(42, 47, 50);
+    font-weight: 500;
+    font-size: 20px;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    color: rgba(241, 241, 242, 0.9);
+    /* border-right: 1px solid;
+    border-color: rgb(5, 97, 98);; */
+}
+
+.lowerSidePanel {
+    background-color: inherit;
+    overflow-y: scroll;
+    padding: 0px 10px 5px;
+    flex: 1;
+}
+
+
+.lowerSidePanel::-webkit-scrollbar {
+    width: 6px;
+    border-radius: 10px;
+}
+
+.lowerSidePanel::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.25);
+}
+
+.lowerSidePanel::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+
+.user {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    width: 80%;
+    box-sizing: border-box;
+    margin: 15px 10px 0px;
+    font-size: 14px;
+    color: hsla(240, 4%, 80%, 0.73);
+}
+
+.user::after {
+    content:"";
+    padding: 0px 0px 15px;
+    display: block;
+    align-self: center;
+    border-bottom: 1px solid;
+    border-color: rgba(0, 0, 0);
+    width: 120%;
+}
+
+.user-name {
+    font-weight: 600;
+    font-size: 17px; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: rgba(241, 241, 242, 0.73);
+
+}
+
+.user-activity {
+    white-space: nowrap;
+    padding: 1px 0px;
+
+}
+
+.user-activity.plainText {
+    font-weight: 400;
+}
+
+.user-activity.fancyText {
+    font-weight: 500;
+}
+
+.user-loc {
+    text-overflow: ellipsis;
+
+}
+
+.user-loc svg{
+    vertical-align: middle;
 }

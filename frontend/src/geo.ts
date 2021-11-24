@@ -1,4 +1,4 @@
-const exceptionalReservationsToISO = {
+const exceptionalReservationsToISO: { [key: string]: string }= {
     "Ascension Island": "AC",
     "Clipperton Island": "CP",
     "Island of Sark": "CQ",
@@ -22,7 +22,7 @@ function isoAlpha2ToSymbols(code: string): string {
       throw Error('Must be an ISO 3166-1 alpha-2 code.')
     }
     const diff = 0x1F1E6 - 0x41
-    return [...code].map(x => String.fromCodePoint(x.charCodeAt(0) + diff)).join('')
+    return Array.from(code).map(x => String.fromCodePoint(x.charCodeAt(0) + diff)).join('')
 }
 
 export {

@@ -1,21 +1,27 @@
-import React from "react"
+import React, { ReactNode } from "react"
 import { assertUnreachable, formatDate } from "./utils"
-import "@mdi/font/css/materialdesignicons.min.css"
+import Icon from "@mdi/react"
+import { mdiAccountEdit, mdiSend, mdiHome} from "@mdi/js"
 import "./App.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast } from "../../messages"
+import type { BackMessage, FrontMessage, UserList, UserInfo, ReceivedMessage, Toast, UserTyping } from "../../messages"
+import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
 
 interface AppState {
     currentNick?: string,
     currentUserList?: UserList,
     messages: (ReceivedMessage | Toast)[],
+    typingUsers: Map<string, NodeJS.Timeout>,
 }
 
 class App extends React.Component {
     con?: WebSocket
     bell?: HTMLAudioElement
     bellReady = false
+    onFocus: any
+    onBlur: any
+    goSend =  true
 
-    state: AppState = {messages: []}
+    state: AppState = {messages: [], typingUsers: new Map()}
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -29,12 +35,31 @@ class App extends React.Component {
         this.bell.addEventListener("canplaythrough", event => {
             this.bellReady = true;
         })
+        this.onFocus = () => {
+            this.send({
+                type: "isOnline",
+                online: true,
+            })
+        }
+        this.onBlur = () => {
+            this.send({
+                type: "isOnline",
+                online: false,
+            })
+        }
 
         Notification.requestPermission()
+        window.addEventListener("focus", this.onFocus)
+        window.addEventListener("blur", this.onBlur)
     }
 
     componentWillUnmount() {
         this.con?.close()
+        window.removeEventListener("focus", this.onFocus)
+        window.removeEventListener("focus", this.onBlur)
+        for (const [key, value] of this.state.typingUsers) {
+            clearTimeout(value)
+        }
     }
 
     send(data: FrontMessage): void {
@@ -49,6 +74,8 @@ class App extends React.Component {
             this.receiveMessage(data)
         } else if (data.type === "toast") {
             this.receiveToast(data)
+        } else if (data.type === "typing") {
+            this.receiveTyping(data)
         } else {
             assertUnreachable()
         }
@@ -97,6 +124,18 @@ class App extends React.Component {
         this.setState({ messages: this.state.messages.concat([data]) })
     }
 
+    receiveTyping(data: UserTyping): void {
+        const newMap = new Map(this.state.typingUsers)
+        if(newMap.has(data.from)) clearTimeout(newMap.get(data.from)!)
+        const timeout = setTimeout(() => {
+            const newMap = new Map(this.state.typingUsers)
+            newMap.delete(data.from)
+            this.setState({ typingUsers: newMap })
+        }, 2000)
+        newMap.set(data.from, timeout)
+        this.setState({ typingUsers: newMap })
+    }
+
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
@@ -114,7 +153,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages } = this.state
+        const { currentNick, currentUserList, messages, typingUsers } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -135,7 +174,7 @@ class App extends React.Component {
             <form className="nickField" autoComplete="off" onSubmit={onNickSubmit}>
                 <input ref={this.nickInputRef} type="text" className="nickInput" placeholder={currentNick || "Write your nick"} maxLength={20} />
                 <button className="nickButton" type="submit">
-                    <span className="mdi mdi-account-edit"></span>
+                    <Icon path={mdiAccountEdit} size={"1em"}/>
                 </button>
             </form>
         )
@@ -149,7 +188,7 @@ class App extends React.Component {
             if (data.own) msgClass += " own"
             if (isFollowup) msgClass += " followup"
             return (
-                <div className={msgClass}>
+                <div className={msgClass} key={i}>
                     {(!data.own && !isFollowup) ? 
                         <span className="message-user" style={{color: data.cssColor}}>{data.from}</span> :
                         null}
@@ -159,7 +198,7 @@ class App extends React.Component {
             )
         }
 
-        const renderToast = (data: Toast) => {
+        const renderToast = (data: Toast, i: number) => {
             let text: string
             if (data.toast === "userChange") {
                 if (data.sign === "plus") {
@@ -179,7 +218,7 @@ class App extends React.Component {
                 assertUnreachable()
             }
             return (
-                <div className="toast">
+                <div className="toast" key={i}>
                     <span className="toast-text">
                     {text}
                     </span>
@@ -189,7 +228,7 @@ class App extends React.Component {
 
         const renderedMessages = messages.map((data, i) => {
             if (data.type === "message") return renderMsg(data, i)
-            if (data.type === "toast") return renderToast(data)
+            if (data.type === "toast") return renderToast(data, i)
         })
         const textField = (
             <div ref={this.textFieldRef} className="textField">
@@ -205,6 +244,16 @@ class App extends React.Component {
             this.postAutoscroll(currentScroll)
         }
 
+        const isTyping = () => {
+            if(!this.goSend) return 
+            this.send({
+                type: "typing",
+            })
+            this.goSend = false
+            setTimeout(() => {
+                this.goSend = true
+            }, 1000)
+        }
         const onTextKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault()
@@ -218,10 +267,10 @@ class App extends React.Component {
         const messageField = (
             <form className="messageField" autoComplete="off" onSubmit={onTextSubmit}>
                 <textarea ref={this.textInputRef} className="textInput" placeholder="Type a message"
-                    rows={1} autoFocus maxLength={5000} onInput={onTextInput}
+                    rows={1} autoFocus maxLength={5000} onInput={(event) => {onTextInput(event); isTyping()}}
                     onKeyDown={onTextKeyDown}></textarea>
                 <button className="sendButton" type="submit">
-                    <span className="mdi mdi-send"></span>
+                    <Icon path={ mdiSend } size={"1em"}/>
                 </button>
             </form>
         )
@@ -232,8 +281,62 @@ class App extends React.Component {
             return otherUsers.join(", ")
         })(currentUserList)
 
+        function formatUserLocation(region?:string, countryCode?:string, bogon?:boolean, city?:string): ReactNode {
+            if (bogon) {
+                return (
+                    <>
+                        <Icon path={mdiHome} size={"1em"}/><span> Local</span>
+                    </>
+                )
+            } else if(countryCode) {
+                const ISO = (region && (region in exceptionalReservationsToISO)) ? exceptionalReservationsToISO[region] : countryCode
+                const symbols = isoAlpha2ToSymbols(ISO)
+                return city ? `(${symbols} ${city})` : `(${symbols})`
+            } else {
+                return "🏴‍☠️"
+            }
+        }
+
+        const renderUser = (user: UserInfo) => {
+            const {region, countryCode, bogon, city} = user.ipInfo || {}
+            const lastActivityDate = new Date(user.lastActivity)
+            const onlineStatus = user.online
+            const typingStatus = typingUsers.has(user.name)
+            const userActivityInfo = [["typing...", "fancyText"], ["online", "fancyText"], ["last seen "+formatDate(lastActivityDate), "plainText"]]
+            const position = typingStatus ? 0 : (onlineStatus ? 1 : 2)
+            const userActivity = (
+                <span className={"user-activity " + userActivityInfo[position][1]}>
+                    {userActivityInfo[position][0]}
+                </span>
+            )
+            return (
+                <div className="user" key={user.name}>
+                    <span className="user-name">
+                        {user.name}
+                    </span>
+                    {userActivity}
+                    <span className="user-loc">
+                        {formatUserLocation(region, countryCode, bogon, city)}
+                    </span>
+                </div>
+            )
+        }
+        
+        const sidePanel = () => {
+            const sortUsers = Array.from(currentUserList?.users || [])
+            return sortUsers.sort((a, b) => a.own ? -1 : 0).map(renderUser)
+        }
+
         return (
             <div className="container">
+                <div className="sidePanel">
+                    <header className="upperSidePanel">
+                        Users
+                    </header>
+                    <div className="lowerSidePanel">
+                        {sidePanel()}
+                    </div>
+                </div>
                 <div className="app">
                     <div className="topBar">
                         <div className="topBarLine1">
