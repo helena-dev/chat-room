@@ -135,7 +135,7 @@ html, body, #root, .container {
     width: 135px
 }
 
-.nickButton{
+.nickButton {
     background-color: transparent;
     border: none;
     color: rgb(130 134 137);
@@ -174,13 +174,13 @@ html, body, #root, .container {
     max-height: 30vh;
     overflow-y: auto;
     padding-right: 3px;
-    border:solid transparent;
+    border: solid transparent;
     border-width: 0px 0px 3px;
 }
 
 .message.own .message-text {
-    border:solid transparent;
-    border-width: 3px 0px ;
+    border: solid transparent;
+    border-width: 3px 0px;
 }
 
 .message-time {
@@ -327,7 +327,7 @@ html, body, #root, .container {
 }
 
 .user::after {
-    content:"";
+    content: "";
     padding: 0px 0px 15px;
     display: block;
     align-self: center;
@@ -338,7 +338,7 @@ html, body, #root, .container {
 
 .user-name {
     font-weight: 600;
-    font-size: 17px; 
+    font-size: 17px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -365,6 +365,6 @@ html, body, #root, .container {
 
 }
 
-.user-loc svg{
+.user-loc svg {
     vertical-align: middle;
 }

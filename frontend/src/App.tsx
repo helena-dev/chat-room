@@ -1,7 +1,7 @@
 import React, { ReactNode } from "react"
 import { assertUnreachable, formatDate } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiSend, mdiHome} from "@mdi/js"
+import { mdiAccountEdit, mdiSend, mdiHome } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, UserInfo, ReceivedMessage, Toast, UserTyping } from "../../messages"
 import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
@@ -22,9 +22,9 @@ class App extends React.Component {
     onFocus: any
     onBlur: any
     handleResize: any
-    goSend =  true
+    goSend = true
 
-    state: AppState = {messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -80,7 +80,7 @@ class App extends React.Component {
     receive(msgEvent: MessageEvent): void {
         const data: BackMessage = JSON.parse(msgEvent.data)
         if (data.type === "userList") {
-           this.receiveUserList(data)
+            this.receiveUserList(data)
         } else if (data.type === "message") {
             this.receiveMessage(data)
         } else if (data.type === "toast") {
@@ -143,7 +143,7 @@ class App extends React.Component {
 
     receiveTyping(data: UserTyping): void {
         const newMap = new Map(this.state.typingUsers)
-        if(newMap.has(data.from)) clearTimeout(newMap.get(data.from)!)
+        if (newMap.has(data.from)) clearTimeout(newMap.get(data.from)!)
         const timeout = setTimeout(() => {
             const newMap = new Map(this.state.typingUsers)
             newMap.delete(data.from)
@@ -191,7 +191,7 @@ class App extends React.Component {
             <form className="nickField" autoComplete="off" onSubmit={onNickSubmit}>
                 <input ref={this.nickInputRef} type="text" className="nickInput" placeholder={currentNick || "Write your nick"} maxLength={20} />
                 <button className="nickButton" type="submit">
-                    <Icon path={mdiAccountEdit} size={"1em"}/>
+                    <Icon path={mdiAccountEdit} size={"1em"} />
                 </button>
             </form>
         )
@@ -200,14 +200,14 @@ class App extends React.Component {
             const msgDate = new Date(data.date)
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
-            const isFollowup = (i > 0 && doesMatch(messages[i-1]))
+            const isFollowup = (i > 0 && doesMatch(messages[i - 1]))
             let msgClass = "message"
             if (data.own) msgClass += " own"
             if (isFollowup) msgClass += " followup"
             return (
                 <div className={msgClass} key={i}>
-                    {(!data.own && !isFollowup) ? 
-                        <span className="message-user" style={{color: data.cssColor}}>{data.from}</span> :
+                    {(!data.own && !isFollowup) ?
+                        <span className="message-user" style={{ color: data.cssColor }}>{data.from}</span> :
                         null}
                     <span className="message-text">{data.text}</span>
                     <span className="message-time">{formatDate(msgDate)}</span>
@@ -237,7 +237,7 @@ class App extends React.Component {
             return (
                 <div className="toast" key={i}>
                     <span className="toast-text">
-                    {text}
+                        {text}
                     </span>
                 </div>
             )
@@ -252,7 +252,7 @@ class App extends React.Component {
                 {renderedMessages}
             </div>
         )
-        
+
         const onTextInput = (event: React.FormEvent<HTMLTextAreaElement>) => {
             const currentScroll = this.preAutoscroll()
             const borders = 2 // Border size (top +  bottom) in px. FIXME cause this is ugly
@@ -262,7 +262,7 @@ class App extends React.Component {
         }
 
         const isTyping = () => {
-            if(!this.goSend) return 
+            if (!this.goSend) return
             this.send({
                 type: "typing",
             })
@@ -284,10 +284,10 @@ class App extends React.Component {
         const messageField = (
             <form className="messageField" autoComplete="off" onSubmit={onTextSubmit}>
                 <textarea ref={this.textInputRef} className="textInput" placeholder="Type a message"
-                    rows={1} autoFocus maxLength={5000} onInput={(event) => {onTextInput(event); isTyping()}}
+                    rows={1} autoFocus maxLength={5000} onInput={(event) => { onTextInput(event); isTyping() }}
                     onKeyDown={onTextKeyDown}></textarea>
                 <button className="sendButton" type="submit">
-                    <Icon path={ mdiSend } size={"1em"}/>
+                    <Icon path={mdiSend} size={"1em"} />
                 </button>
             </form>
         )
@@ -298,14 +298,14 @@ class App extends React.Component {
             return otherUsers.join(", ")
         })(currentUserList)
 
-        function formatUserLocation(region?:string, countryCode?:string, bogon?:boolean, city?:string): ReactNode {
+        function formatUserLocation(region?: string, countryCode?: string, bogon?: boolean, city?: string): ReactNode {
             if (bogon) {
                 return (
                     <>
-                        <Icon path={mdiHome} size={"1em"}/><span> Local</span>
+                        <Icon path={mdiHome} size={"1em"} /><span> Local</span>
                     </>
                 )
-            } else if(countryCode) {
+            } else if (countryCode) {
                 const ISO = (region && (region in exceptionalReservationsToISO)) ? exceptionalReservationsToISO[region] : countryCode
                 const symbols = isoAlpha2ToSymbols(ISO)
                 return city ? `${symbols}, ${city}` : `${symbols}`
@@ -315,11 +315,11 @@ class App extends React.Component {
         }
 
         const renderUser = (user: UserInfo) => {
-            const {region, countryCode, bogon, city} = user.ipInfo || {}
+            const { region, countryCode, bogon, city } = user.ipInfo || {}
             const lastActivityDate = new Date(user.lastActivity)
             const onlineStatus = user.online
             const typingStatus = typingUsers.has(user.name)
-            const userActivityInfo = [["typing...", "fancyText"], ["online", "fancyText"], ["last seen "+formatDate(lastActivityDate), "plainText"]]
+            const userActivityInfo = [["typing...", "fancyText"], ["online", "fancyText"], ["last seen " + formatDate(lastActivityDate), "plainText"]]
             const position = typingStatus ? 0 : (onlineStatus ? 1 : 2)
             const userActivity = (
                 <span className={"user-activity " + userActivityInfo[position][1]}>
@@ -344,7 +344,7 @@ class App extends React.Component {
             return sortUsers.sort((a, b) => a.own ? -1 : 0).map(renderUser)
         }
 
-        const realSidePanel = () =>  {
+        const realSidePanel = () => {
             const size = windowWidth >= 1170 ? " wide" : " narrow"
             return (
                 <div className={"sidePanelContainer" + size}>
