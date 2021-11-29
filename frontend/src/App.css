@@ -53,6 +53,7 @@ html, body, #root, .container {
     padding: 10px 16px;
     box-sizing: border-box;
     display: flex;
+    gap: 10px;
 }
 
 .topBar, .upperSidePanel {
@@ -66,6 +67,11 @@ html, body, #root, .container {
     flex: 1;
     min-width: 0;
     cursor: pointer;
+}
+
+.topBarRight {
+    display: flex;
+    align-items: center;
 }
 
 .topBarTitle {
