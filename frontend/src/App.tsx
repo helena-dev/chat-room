@@ -115,6 +115,12 @@ class App extends React.Component {
             this.notification(data)
         }
         this.setState({ messages: this.state.messages.concat([data]) })
+        const newMap = new Map(this.state.typingUsers)
+        if (newMap.has(data.from)) {
+            clearTimeout(newMap.get(data.from)!)
+            newMap.delete(data.from)
+            this.setState({ typingUsers: newMap })
+        }
     }
 
     receiveToast(data: Toast): void {
