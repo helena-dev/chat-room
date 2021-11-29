@@ -11,6 +11,8 @@ interface AppState {
     currentUserList?: UserList,
     messages: (ReceivedMessage | Toast)[],
     typingUsers: Map<string, NodeJS.Timeout>,
+    showPanel: boolean,
+    windowWidth: number,
 }
 
 class App extends React.Component {
@@ -19,9 +21,10 @@ class App extends React.Component {
     bellReady = false
     onFocus: any
     onBlur: any
+    handleResize: any
     goSend =  true
 
-    state: AppState = {messages: [], typingUsers: new Map()}
+    state: AppState = {messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -51,6 +54,12 @@ class App extends React.Component {
         Notification.requestPermission()
         window.addEventListener("focus", this.onFocus)
         window.addEventListener("blur", this.onBlur)
+
+        this.handleResize = () => {
+            this.setState({ windowWidth: window.innerWidth })
+        }
+
+        window.addEventListener("resize", this.handleResize);
     }
 
     componentWillUnmount() {
@@ -60,6 +69,8 @@ class App extends React.Component {
         for (const [key, value] of this.state.typingUsers) {
             clearTimeout(value)
         }
+
+        window.removeEventListener("resize", this.handleResize);
     }
 
     send(data: FrontMessage): void {
@@ -159,7 +170,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -327,29 +338,44 @@ class App extends React.Component {
                 </div>
             )
         }
-        
+
         const sidePanel = () => {
             const sortUsers = Array.from(currentUserList?.users || [])
             return sortUsers.sort((a, b) => a.own ? -1 : 0).map(renderUser)
         }
 
-        return (
-            <div className="container">
-                <div className="sidePanel">
-                    <header className="upperSidePanel">
-                        Users
-                    </header>
-                    <div className="lowerSidePanel">
-                        {sidePanel()}
+        const realSidePanel = () =>  {
+            const size = windowWidth >= 1170 ? " wide" : " narrow"
+            return (
+                <div className={"sidePanelContainer" + size}>
+                    <div className={"sidePanel" + size}>
+                        <header className={"upperSidePanel" + size}>
+                            Users
+                        </header>
+                        <div className={"lowerSidePanel" + size}>
+                            {sidePanel()}
+                        </div>
                     </div>
                 </div>
+            )
+        }
+
+        const onTopBarLeftClick = () => {
+            this.setState({ showPanel: (showPanel ? false : true) })
+        }
+
+        return (
+            <div className="container">
+                {showPanel ? realSidePanel() : undefined}
                 <div className="app">
                     <div className="topBar">
-                        <div className="topBarLine1">
+                        <div className="topBarLeft" onClick={onTopBarLeftClick}>
                             <h2 className="topBarTitle">Chat-room</h2>
+                            <p className="topBarText">{topBarText}</p>
+                        </div>
+                        <div className="topBarRight">
                             {nickField}
                         </div>
-                        <p className="topBarText">{topBarText}</p>
                     </div>
                     {textField}
                     {messageField}
