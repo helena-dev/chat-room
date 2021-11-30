@@ -22,6 +22,7 @@ interface ConnectionData {
 
 let conNum = 0
 let users: { [key: string]: ConnectionData } = {}
+let msgNum = 0
 
 const server = new WebSocketServer({ port: 8080 });
 server.on("connection", (con, request) => {
@@ -74,8 +75,10 @@ server.on("connection", (con, request) => {
                 oldName,
                 newName: currentCon,
                 own: (connectionData.connection === con),
+                msgNum,
             })
         }
+        msgNum++
     }
 
     function sendUserList() {
@@ -112,8 +115,10 @@ server.on("connection", (con, request) => {
                 sign,
                 name: currentCon,
                 own: (connectionData.connection === con),
+                msgNum,
             })
         }
+        msgNum++
     }
 
     sendUserList()
@@ -125,7 +130,7 @@ server.on("connection", (con, request) => {
             console.log(`Got geolocation info for connection ${currentCon}:`, info)
             sendUserList()
         })
-
+        
     con.on("message", chunk => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
@@ -138,8 +143,10 @@ server.on("connection", (con, request) => {
                     from: currentCon,
                     date: new Date(),
                     cssColor: connectionData.cssColor,
+                    msgNum,
                 })
             }
+            msgNum++
         } else if (data.type === "userName") {
             changeName(data.text)
         } else if (data.type === "isOnline") {
@@ -153,6 +160,14 @@ server.on("connection", (con, request) => {
                     from: currentCon,
                 })
             }
+        } else if (data.type === "deleteMsg") {
+            const msgId = data.msgNum
+            for (const targetConnectionData of Object.values(users)) {
+                targetConnectionData.send({
+                    type: "deleteMsg",
+                    msgNum: msgId,
+                })
+            }
         } else {
             throw Error("owo")
         }
@@ -162,8 +177,10 @@ server.on("connection", (con, request) => {
         connectionData.send({
             type: "toast",
             toast: "punish",
-            text: "Don't mess with the code. Bye."
+            text: "Don't mess with the code. Bye.",
+            msgNum,
         })
+        msgNum++
         con.close()
     }
 

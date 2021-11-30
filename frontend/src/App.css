@@ -169,10 +169,35 @@ html, body, #root, .container {
     align-self: flex-end;
 }
 
+.msgMenuButton {
+    position: absolute;
+    border-bottom-left-radius: 50px;
+    align-self: flex-end;
+    background-color: inherit;
+    border: none;
+    cursor: pointer;
+    padding: 0 0 6px 6px;
+    color: rgba(241, 241, 242, 0.6);
+    opacity: 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+}
+
+.msgMenuButton:hover {
+    opacity: 1;
+}
+
 .message-user {
     font-weight: 500;
     font-size: 14px;
     color: orchid;
+}
+
+.message-belowUser {
+    display: flex;
+    flex-direction: row;
 }
 
 .message-text {
@@ -193,6 +218,11 @@ html, body, #root, .container {
     font-size: 12px;
     color: rgba(241, 241, 242, 0.6);
     text-align: right;
+    align-self: flex-end;
+    display: block;
+    white-space: nowrap;
+    justify-self: end;
+    padding-left: 10px;
 }
 
 .message.followup {

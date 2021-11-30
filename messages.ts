@@ -2,13 +2,15 @@ export type BackMessage =
     UserList |
     Toast |
     ReceivedMessage |
-    UserTyping
+    UserTyping |
+    DeleteMessage
 
 export type FrontMessage =
     SentMessage |
     UserNameSubmit |
     IsOnlineCheck |
-    IsTyping
+    IsTyping |
+    DeleteMessage
 
 export interface UserList {
     type: "userList";
@@ -32,6 +34,7 @@ export interface UserInfo {
 export interface ToastBase {
     type: "toast";
     toast: string;
+    msgNum: number
 }
 
 export type Toast = UserNumChangeToast | NickChangeToast | PunishToast
@@ -62,6 +65,7 @@ export interface ReceivedMessage {
     from: string;
     date: Date;
     cssColor: string;
+    msgNum: number;
 }
 
 export interface SentMessage {
@@ -86,4 +90,9 @@ export interface IsTyping {
 export interface UserTyping {
     type: "typing";
     from: string;
+}
+
+export interface DeleteMessage {
+    type: "deleteMsg";
+    msgNum: number;
 }

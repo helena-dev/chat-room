@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react"
 import { assertUnreachable, formatDate } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiSend, mdiHome } from "@mdi/js"
+import { mdiAccountEdit, mdiSend, mdiHome, mdiChevronDown } from "@mdi/js"
 import "./App.css"
-import type { BackMessage, FrontMessage, UserList, UserInfo, ReceivedMessage, Toast, UserTyping } from "../../messages"
+import type { BackMessage, FrontMessage, UserList, UserInfo, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
 import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
 
 interface AppState {
@@ -87,6 +87,8 @@ class App extends React.Component {
             this.receiveToast(data)
         } else if (data.type === "typing") {
             this.receiveTyping(data)
+        } else if (data.type === "deleteMsg") {
+            this.receiveDeleteMsg(data)
         } else {
             assertUnreachable()
         }
@@ -153,6 +155,12 @@ class App extends React.Component {
         this.setState({ typingUsers: newMap })
     }
 
+    receiveDeleteMsg (data: DeleteMessage) {
+            const beforeMessages = this.state.messages;
+            const afterMessages = beforeMessages.filter(x => x.msgNum !== data.msgNum)
+            this.setState({ messages: afterMessages })
+    }
+
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
@@ -196,6 +204,15 @@ class App extends React.Component {
             </form>
         )
 
+        const onMsgMenuButtonClick = (i: number, own: boolean) => {
+            if(!own) return
+            console.log("mèu", i)
+            this.send({
+                type: "deleteMsg",
+                msgNum: i,
+            })
+        }
+
         const renderMsg = (data: ReceivedMessage, i: number) => {
             const msgDate = new Date(data.date)
             const doesMatch = (msg: ReceivedMessage | Toast) =>
@@ -206,11 +223,16 @@ class App extends React.Component {
             if (isFollowup) msgClass += " followup"
             return (
                 <div className={msgClass} key={i}>
+                    <button className="msgMenuButton" type="button" onClick={() => onMsgMenuButtonClick(data.msgNum, data.own)}>
+                        <Icon path={mdiChevronDown} size={"1em"} />
+                    </button>
                     {(!data.own && !isFollowup) ?
                         <span className="message-user" style={{ color: data.cssColor }}>{data.from}</span> :
                         null}
-                    <span className="message-text">{data.text}</span>
-                    <span className="message-time">{formatDate(msgDate)}</span>
+                    <div className="message-belowUser">
+                        <span className="message-text">{data.text}</span>
+                        <span className="message-time">{formatDate(msgDate)}</span>
+                    </div>
                 </div>
             )
         }
