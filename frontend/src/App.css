@@ -31,7 +31,7 @@ html, body, #root, .container {
     z-index: 0;
 }
 
-.app, .sidePanelContainer.narrow {
+.app, .sidePanelContainer.narrow, .messageMenuBkg {
     height: 100%;
     width: 100%;
     max-width: 850px;
@@ -170,6 +170,29 @@ html, body, #root, .container {
     align-self: flex-end;
 }
 
+.messageMenuBkg {
+    position: absolute;
+    background-color: transparent;
+}
+
+.messageMenu {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    background-color: rgb(42, 47, 50);
+    padding: 10px;
+    border-radius: 7.5px;
+    box-shadow: 0 0 5px rgb(0,0,0);
+    z-index: 1;
+}
+
+.deleteMsgButton {
+    border: none;
+    background-color: inherit;
+    color: rgba(241, 241, 242, 0.92);
+    cursor: pointer;
+}
+
 .msgMenuButton {
     position: absolute;
     border-bottom-left-radius: 50px;
@@ -204,8 +227,6 @@ html, body, #root, .container {
 
 .message-text {
     white-space: break-spaces;
-    max-height: 30vh;
-    overflow-y: auto;
     padding-right: 3px;
     border: solid transparent;
     border-width: 0px 0px 3px;

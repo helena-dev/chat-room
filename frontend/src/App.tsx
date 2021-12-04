@@ -13,6 +13,7 @@ interface AppState {
     typingUsers: Map<string, NodeJS.Timeout>,
     showPanel: boolean,
     windowWidth: number,
+    msgMenu: boolean,
 }
 
 class App extends React.Component {
@@ -23,8 +24,10 @@ class App extends React.Component {
     onBlur: any
     handleResize: any
     goSend = true
+    msgData?: ReceivedMessage
+    messageRefMap = new Map()
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, msgMenu: false, }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -134,6 +137,8 @@ class App extends React.Component {
             newMap.delete(data.from)
             this.setState({ typingUsers: newMap })
         }
+        this.messageRefMap.set(data.msgNum, React.createRef<HTMLDivElement>())
+        console.log(this.messageRefMap)
     }
 
     receiveToast(data: Toast): void {
@@ -155,10 +160,10 @@ class App extends React.Component {
         this.setState({ typingUsers: newMap })
     }
 
-    receiveDeleteMsg (data: DeleteMessage) {
-            const beforeMessages = this.state.messages;
-            const afterMessages = beforeMessages.filter(x => x.msgNum !== data.msgNum)
-            this.setState({ messages: afterMessages })
+    receiveDeleteMsg(data: DeleteMessage) {
+        const beforeMessages = this.state.messages;
+        const afterMessages = beforeMessages.filter(x => x.msgNum !== data.msgNum)
+        this.setState({ messages: afterMessages })
     }
 
     sendMessage(): void {
@@ -178,7 +183,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, msgMenu } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -204,13 +209,36 @@ class App extends React.Component {
             </form>
         )
 
-        const onMsgMenuButtonClick = (i: number, own: boolean) => {
-            if(!own) return
-            console.log("mèu", i)
+        const onDeleteButtonClick = (i: number, own: boolean) => {
+            if (!own) return
             this.send({
                 type: "deleteMsg",
                 msgNum: i,
             })
+        }
+
+        const disappearMsgMenu = () => {
+            this.setState({ msgMenu: false })
+        }
+
+        const onMsgMenuButtonClick = (data: ReceivedMessage) => {
+            this.setState({ msgMenu: true })
+            this.msgData = data
+        }
+
+        const messageMenu = (data: ReceivedMessage) => {
+            const delButton = (
+                <button className="deleteMsgButton" type="button" onClick={() => onDeleteButtonClick(data.msgNum, data.own)}>
+                    Delete
+                </button>
+            )
+            return (
+                <div className="messageMenuBkg" onClick={disappearMsgMenu}>
+                    <div className="messageMenu" style={{ right: (data.own ? 15 + 15 : undefined), left: (data.own ? undefined : this.messageRefMap.get(data.msgNum).current.offsetWidth), top: this.messageRefMap.get(data.msgNum).current.offsetTop + 25 }}>
+                        {data.own ? delButton : undefined}
+                    </div>
+                </div>
+            )
         }
 
         const renderMsg = (data: ReceivedMessage, i: number) => {
@@ -222,8 +250,8 @@ class App extends React.Component {
             if (data.own) msgClass += " own"
             if (isFollowup) msgClass += " followup"
             return (
-                <div className={msgClass} key={i}>
-                    <button className="msgMenuButton" type="button" onClick={() => onMsgMenuButtonClick(data.msgNum, data.own)}>
+                <div ref={this.messageRefMap.get(data.msgNum)} className={msgClass} key={i} id={data.msgNum.toString()}>
+                    <button className="msgMenuButton" type="button" onClick={() => onMsgMenuButtonClick(data)}>
                         <Icon path={mdiChevronDown} size={"1em"} />
                     </button>
                     {(!data.own && !isFollowup) ?
@@ -400,6 +428,7 @@ class App extends React.Component {
                         </div>
                     </div>
                     {textField}
+                    {msgMenu ? messageMenu(this.msgData!) : undefined}
                     {messageField}
                 </div>
             </div >
