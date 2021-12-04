@@ -229,9 +229,9 @@ class App extends React.Component {
                     {(!data.own && !isFollowup) ?
                         <span className="message-user" style={{ color: data.cssColor }}>{data.from}</span> :
                         null}
-                    <div className="message-belowUser">
+                    <div className="message-body">
                         <span className="message-text">{data.text}</span>
-                        <span className="message-time">{formatDate(msgDate)}</span>
+                        <div className="message-time">{formatDate(msgDate)}</div>
                     </div>
                 </div>
             )
