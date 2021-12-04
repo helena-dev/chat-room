@@ -254,12 +254,12 @@ class App extends React.Component {
             if (isFollowup) msgClass += " followup"
             return (
                 <div ref={this.messageRefMap.get(data.msgNum)} className={msgClass} key={i} id={data.msgNum.toString()}>
-                    <button className="msgMenuButton" type="button" onClick={() => onMsgMenuButtonClick(data)}>
-                        <Icon path={mdiChevronDown} size={"1em"} />
-                    </button>
                     {(!data.own && !isFollowup) ?
                         <span className="message-user" style={{ color: data.cssColor }}>{data.from}</span> :
                         null}
+                    <button className="msgMenuButton" type="button" onClick={() => onMsgMenuButtonClick(data)}>
+                        <Icon path={mdiChevronDown} size={"1em"} />
+                    </button>
                     <div className="message-body">
                         <span className="message-text">{data.text}</span>
                         <div className="message-time">{formatDate(msgDate)}</div>

@@ -158,11 +158,10 @@ html, body, #root, .container {
     background-color: rgb(38, 45, 49);
     margin: 12px 10px 0px;
     border-radius: 7.5px;
-    display: flex;
-    flex-direction: column;
     max-width: 75%;
     overflow-wrap: anywhere;
     hyphens: auto;
+    position: relative;
 }
 
 .message.own {
@@ -197,11 +196,10 @@ html, body, #root, .container {
 .msgMenuButton {
     position: absolute;
     border-bottom-left-radius: 50px;
-    align-self: flex-end;
     background-color: inherit;
     border: none;
     cursor: pointer;
-    padding: 0 0 6px 6px;
+    padding: 0 5px 6px 6px;
     color: rgba(241, 241, 242, 0.6);
     opacity: 0;
     display: inline-flex;
@@ -209,6 +207,7 @@ html, body, #root, .container {
     align-items: center;
     font-size: 25px;
     z-index: 1;
+    right: 0;
 }
 
 .msgMenuButton:hover {
