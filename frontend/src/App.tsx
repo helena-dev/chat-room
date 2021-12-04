@@ -13,7 +13,7 @@ interface AppState {
     typingUsers: Map<string, NodeJS.Timeout>,
     showPanel: boolean,
     windowWidth: number,
-    msgMenu: boolean,
+    msgData?: ReceivedMessage,
 }
 
 class App extends React.Component {
@@ -27,7 +27,7 @@ class App extends React.Component {
     msgData?: ReceivedMessage
     messageRefMap = new Map()
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, msgMenu: false, }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -138,7 +138,6 @@ class App extends React.Component {
             this.setState({ typingUsers: newMap })
         }
         this.messageRefMap.set(data.msgNum, React.createRef<HTMLDivElement>())
-        console.log(this.messageRefMap)
     }
 
     receiveToast(data: Toast): void {
@@ -183,7 +182,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, msgMenu } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, msgData } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -218,12 +217,11 @@ class App extends React.Component {
         }
 
         const disappearMsgMenu = () => {
-            this.setState({ msgMenu: false })
+            this.setState({ msgData: undefined })
         }
 
         const onMsgMenuButtonClick = (data: ReceivedMessage) => {
-            this.setState({ msgMenu: true })
-            this.msgData = data
+            this.setState({ msgData: data })
         }
 
         const messageMenu = (data: ReceivedMessage) => {
@@ -428,7 +426,7 @@ class App extends React.Component {
                         </div>
                     </div>
                     {textField}
-                    {msgMenu ? messageMenu(this.msgData!) : undefined}
+                    {msgData ? messageMenu(msgData) : undefined}
                     {messageField}
                 </div>
             </div >
