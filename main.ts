@@ -23,6 +23,9 @@ interface ConnectionData {
 let conNum = 0
 let users: { [key: string]: ConnectionData } = {}
 let msgNum = 0
+function generateMsgId() {
+    return msgNum++
+}
 
 const server = new WebSocketServer({ port: 8080 });
 server.on("connection", (con, request) => {
@@ -68,6 +71,7 @@ server.on("connection", (con, request) => {
         delete users[oldName]
         currentCon = text
         sendUserList()
+        const id = generateMsgId()
         for (const connectionData of Object.values(users)) {
             connectionData.send({
                 type: "toast",
@@ -75,10 +79,9 @@ server.on("connection", (con, request) => {
                 oldName,
                 newName: currentCon,
                 own: (connectionData.connection === con),
-                msgNum,
+                msgNum: id,
             })
         }
-        msgNum++
     }
 
     function sendUserList() {
@@ -108,6 +111,7 @@ server.on("connection", (con, request) => {
     }
 
     function userNumChange(sign: "plus" | "minus") {
+        const id = generateMsgId()
         for (const connectionData of Object.values(users)) {
             connectionData.send({
                 type: "toast",
@@ -115,10 +119,9 @@ server.on("connection", (con, request) => {
                 sign,
                 name: currentCon,
                 own: (connectionData.connection === con),
-                msgNum,
+                msgNum: id,
             })
         }
-        msgNum++
     }
 
     sendUserList()
@@ -135,6 +138,7 @@ server.on("connection", (con, request) => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
             if (data.text.length > 5000) return punish()
+            const id = generateMsgId()
             for (const targetConnectionData of Object.values(users)) {
                 targetConnectionData.send({
                     type: "message",
@@ -143,10 +147,9 @@ server.on("connection", (con, request) => {
                     from: currentCon,
                     date: new Date(),
                     cssColor: connectionData.cssColor,
-                    msgNum,
+                    msgNum: id,
                 })
             }
-            msgNum++
         } else if (data.type === "userName") {
             changeName(data.text)
         } else if (data.type === "isOnline") {
@@ -174,13 +177,13 @@ server.on("connection", (con, request) => {
     })
 
     function punish() {
+        const id = generateMsgId()
         connectionData.send({
             type: "toast",
             toast: "punish",
             text: "Don't mess with the code. Bye.",
-            msgNum,
+            msgNum: id,
         })
-        msgNum++
         con.close()
     }
 

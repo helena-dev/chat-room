@@ -230,9 +230,14 @@ class App extends React.Component {
                     Delete
                 </button>
             )
+            const currentMsg = this.messageRefMap.get(data.msgNum).current
+            const top = currentMsg.offsetTop + 25 
+            const style = data.own ?
+                { top, right: 15 + 15 } :
+                { top, left: currentMsg.offsetWidth }
             return (
                 <div className="messageMenuBkg" onClick={disappearMsgMenu}>
-                    <div className="messageMenu" style={{ right: (data.own ? 15 + 15 : undefined), left: (data.own ? undefined : this.messageRefMap.get(data.msgNum).current.offsetWidth), top: this.messageRefMap.get(data.msgNum).current.offsetTop + 25 }}>
+                    <div className="messageMenu" style={style}>
                         {data.own ? delButton : undefined}
                     </div>
                 </div>
