@@ -1,10 +1,10 @@
-import React, { ReactNode } from "react"
+import React from "react"
 import { assertUnreachable, formatDate } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiSend, mdiHome, mdiChevronDown } from "@mdi/js"
+import { mdiAccountEdit, mdiSend, mdiChevronDown } from "@mdi/js"
 import "./App.css"
-import type { BackMessage, FrontMessage, UserList, UserInfo, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
-import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
+import UserCard from "./UserCard"
 
 interface AppState {
     currentNick?: string,
@@ -351,54 +351,11 @@ class App extends React.Component {
             return otherUsers.join(", ")
         })(currentUserList)
 
-        function formatUserLocation(region?: string, countryCode?: string, bogon?: boolean, city?: string): ReactNode {
-            if (bogon) {
-                return (
-                    <>
-                        <Icon path={mdiHome} size={"1em"} /><span> Local</span>
-                    </>
-                )
-            } else if (countryCode) {
-                const ISO = (region && (region in exceptionalReservationsToISO)) ? exceptionalReservationsToISO[region] : countryCode
-                const symbols = isoAlpha2ToSymbols(ISO)
-                return city ? `${symbols}, ${city}` : `${symbols}`
-            } else {
-                return "🏴‍☠️"
-            }
-        }
-
-        const renderUser = (user: UserInfo) => {
-            const { region, countryCode, bogon, city } = user.ipInfo || {}
-            const lastActivityDate = new Date(user.lastActivity)
-            const onlineStatus = user.online
-            const typingStatus = typingUsers.has(user.name)
-            const userActivityInfo = [["typing...", "fancyText"], ["online", "fancyText"], ["last seen " + formatDate(lastActivityDate), "plainText"]]
-            const position = typingStatus ? 0 : (onlineStatus ? 1 : 2)
-            const userActivity = (
-                <span className={"user-activity " + userActivityInfo[position][1]}>
-                    {userActivityInfo[position][0]}
-                </span>
-            )
-            return (
-                <div className="user" key={user.name}>
-                    <span className="user-name">
-                        {user.name}
-                    </span>
-                    {userActivity}
-                    <span className="user-loc">
-                        {formatUserLocation(region, countryCode, bogon, city)}
-                    </span>
-                </div>
-            )
-        }
-
         const sidePanel = () => {
-            const sortUsers = Array.from(currentUserList?.users || [])
-            return sortUsers.sort((a, b) => a.own ? -1 : 0).map(renderUser)
-        }
-
-        const realSidePanel = () => {
             const size = windowWidth >= 1170 ? " wide" : " narrow"
+            const sortUsers = Array.from(currentUserList?.users || [])
+            const cards = sortUsers.sort((a, b) => a.own ? -1 : 0).map(user =>
+                <UserCard user={user} typingStatus={typingUsers.has(user.name)} key={user.name}/>)
             return (
                 <div className={"sidePanelContainer" + size}>
                     <div className={"sidePanel" + size}>
@@ -406,7 +363,7 @@ class App extends React.Component {
                             Users
                         </header>
                         <div className={"lowerSidePanel" + size}>
-                            {sidePanel()}
+                            {cards}
                         </div>
                     </div>
                 </div>
@@ -419,7 +376,7 @@ class App extends React.Component {
 
         return (
             <div className="container">
-                {showPanel ? realSidePanel() : undefined}
+                {showPanel ? sidePanel() : undefined}
                 <div className="app">
                     <div className="topBar">
                         <div className="topBarLeft" onClick={onTopBarLeftClick}>
