@@ -1,7 +1,7 @@
 import React from "react"
-import { assertUnreachable, formatDate } from "./utils"
+import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiSend, mdiChevronDown } from "@mdi/js"
+import { mdiAccountEdit, mdiSend } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
 import UserCard from "./UserCard"
@@ -31,9 +31,9 @@ class App extends React.Component {
     con?: WebSocket
     bell?: HTMLAudioElement
     bellReady = false
-    onFocus: any
-    onBlur: any
-    handleResize: any
+    onFocus!: () => void
+    onBlur!: () => void
+    handleResize!: () => void
     goSend = true
 
     state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
@@ -239,8 +239,7 @@ class App extends React.Component {
             } })
         }
 
-        const messageMenu = (menuData: MenuData) => {
-            const { message: data, position } = menuData 
+        const messageMenu = ({ message: data, position }: MenuData) => {
             const delButton = (
                 <button className="deleteMsgButton" type="button" onClick={() => onDeleteButtonClick(data.msgNum, data.own)}>
                     Delete
@@ -321,7 +320,7 @@ class App extends React.Component {
             const size = windowWidth >= 1170 ? " wide" : " narrow"
             const sortUsers = Array.from(currentUserList?.users || [])
             const cards = sortUsers.sort((a, b) => a.own ? -1 : 0).map(user =>
-                <UserCard user={user} typingStatus={typingUsers.has(user.name)} key={user.name}/>)
+                <UserCard user={user} typingStatus={typingUsers.has(user.name)} key={user.name} />)
             return (
                 <div className={"sidePanelContainer" + size}>
                     <div className={"sidePanel" + size}>
