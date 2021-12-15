@@ -1,0 +1,92 @@
+.message {
+    padding: 4px 8px 4px 8px;
+    background-color: rgb(38, 45, 49);
+    margin: 12px 10px 0px;
+    border-radius: 7.5px;
+    max-width: 75%;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    position: relative;
+}
+
+.message.own {
+    background-color: rgb(5, 97, 98);
+    align-self: flex-end;
+}
+
+.msgMenuButton {
+    position: absolute;
+    border-bottom-left-radius: 50px;
+    background-color: inherit;
+    border: none;
+    cursor: pointer;
+    padding: 0 5px 6px 6px;
+    color: rgba(241, 241, 242, 0.6);
+    opacity: 0;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 25px;
+    z-index: 1;
+    right: 0;
+}
+
+.msgMenuButton:hover {
+    opacity: 1;
+}
+
+.message-user {
+    font-weight: 500;
+    font-size: 14px;
+    color: orchid;
+}
+
+.message-body {
+    max-height: 30vh;
+    overflow-y: auto;
+    background-color: inherit;
+}
+
+.message-text {
+    white-space: break-spaces;
+    padding-right: 3px;
+    border: solid transparent;
+    border-width: 0px 0px 3px;
+}
+
+.message.own .message-text {
+    border: solid transparent;
+    border-width: 3px 0px;
+}
+
+.message-time {
+    font-size: 12px;
+    color: rgba(241, 241, 242, 0.6);
+    text-align: right;
+    white-space: nowrap;
+    margin: 5px 5px 0px;
+    padding: 5px 5px 0px;
+    float: right;
+    position: sticky;
+    bottom: 0;
+    background-color: inherit;
+    border-radius: 5px;
+}
+
+.message.followup {
+    margin-top: 3px;
+}
+
+.message-body::-webkit-scrollbar {
+    width: 6px;
+    border-radius: 10px;
+}
+
+.message-body::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px inherit;
+}
+
+.message-body::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}

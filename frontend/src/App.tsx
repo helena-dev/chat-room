@@ -6,6 +6,7 @@ import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
 import UserCard from "./UserCard"
 import ToastComponent from "./Toast"
+import Message from "./Message"
 
 interface AppState {
     currentNick?: string,
@@ -14,7 +15,16 @@ interface AppState {
     typingUsers: Map<string, NodeJS.Timeout>,
     showPanel: boolean,
     windowWidth: number,
-    msgData?: ReceivedMessage,
+    menuData?: MenuData,
+}
+
+interface MenuData {
+    position: {
+        top: number,
+        left?: number,
+        right?: number,
+    }
+    message: ReceivedMessage,
 }
 
 class App extends React.Component {
@@ -25,8 +35,6 @@ class App extends React.Component {
     onBlur: any
     handleResize: any
     goSend = true
-    msgData?: ReceivedMessage
-    messageRefMap = new Map()
 
     state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
 
@@ -138,7 +146,6 @@ class App extends React.Component {
             newMap.delete(data.from)
             this.setState({ typingUsers: newMap })
         }
-        this.messageRefMap.set(data.msgNum, React.createRef<HTMLDivElement>())
     }
 
     receiveToast(data: Toast): void {
@@ -183,7 +190,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, msgData } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -218,27 +225,30 @@ class App extends React.Component {
         }
 
         const disappearMsgMenu = () => {
-            this.setState({ msgData: undefined })
+            this.setState({ menuData: undefined })
         }
 
-        const onMsgMenuButtonClick = (data: ReceivedMessage) => {
-            this.setState({ msgData: data })
+        const onMsgMenuButtonClick = (element: HTMLDivElement, data: ReceivedMessage) => {
+            const top = element.offsetTop + 25
+            const position = data.own ?
+                { top, right: 15 + 15 } :
+                { top, left: element.offsetWidth }
+            this.setState({ menuData: {
+                position,
+                message: data,
+            } })
         }
 
-        const messageMenu = (data: ReceivedMessage) => {
+        const messageMenu = (menuData: MenuData) => {
+            const { message: data, position } = menuData 
             const delButton = (
                 <button className="deleteMsgButton" type="button" onClick={() => onDeleteButtonClick(data.msgNum, data.own)}>
                     Delete
                 </button>
             )
-            const currentMsg = this.messageRefMap.get(data.msgNum).current
-            const top = currentMsg.offsetTop + 25 
-            const style = data.own ?
-                { top, right: 15 + 15 } :
-                { top, left: currentMsg.offsetWidth }
             return (
                 <div className="messageMenuBkg" onClick={disappearMsgMenu}>
-                    <div className="messageMenu" style={style}>
+                    <div className="messageMenu" style={position}>
                         {data.own ? delButton : undefined}
                     </div>
                 </div>
@@ -246,27 +256,10 @@ class App extends React.Component {
         }
 
         const renderMsg = (data: ReceivedMessage, i: number) => {
-            const msgDate = new Date(data.date)
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
             const isFollowup = (i > 0 && doesMatch(messages[i - 1]))
-            let msgClass = "message"
-            if (data.own) msgClass += " own"
-            if (isFollowup) msgClass += " followup"
-            return (
-                <div ref={this.messageRefMap.get(data.msgNum)} className={msgClass} key={i} id={data.msgNum.toString()}>
-                    {(!data.own && !isFollowup) ?
-                        <span className="message-user" style={{ color: data.cssColor }}>{data.from}</span> :
-                        null}
-                    <button className="msgMenuButton" type="button" onClick={() => onMsgMenuButtonClick(data)}>
-                        <Icon path={mdiChevronDown} size={"1em"} />
-                    </button>
-                    <div className="message-body">
-                        <span className="message-text">{data.text}</span>
-                        <div className="message-time">{formatDate(msgDate)}</div>
-                    </div>
-                </div>
-            )
+            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} />
         }
 
         const renderedMessages = messages.map((data, i) => {
@@ -361,7 +354,7 @@ class App extends React.Component {
                         </div>
                     </div>
                     {textField}
-                    {msgData ? messageMenu(msgData) : undefined}
+                    {menuData ? messageMenu(menuData) : undefined}
                     {messageField}
                 </div>
             </div >
