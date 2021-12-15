@@ -283,23 +283,6 @@ html, body, #root, .container {
     border-radius: 10px;
 }
 
-.toast {
-    background-color: rgb(30, 42, 48);
-    border-radius: 7.5px;
-    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
-    text-align: center;
-    padding: 5px 12px 6px;
-    align-self: center;
-    margin: 12px 10px 0px;
-}
-
-.toast-text {
-    max-width: 100%;
-    font-size: 12.5px;
-    line-height: 21px;
-    color: rgba(241, 241, 242, 0.92);
-}
-
 .sidePanelContainer.wide {
     position: relative;
 }

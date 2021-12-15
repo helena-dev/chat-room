@@ -5,6 +5,7 @@ import { mdiAccountEdit, mdiSend, mdiChevronDown } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
 import UserCard from "./UserCard"
+import ToastComponent from "./Toast"
 
 interface AppState {
     currentNick?: string,
@@ -268,37 +269,9 @@ class App extends React.Component {
             )
         }
 
-        const renderToast = (data: Toast, i: number) => {
-            let text: string
-            if (data.toast === "userChange") {
-                if (data.sign === "plus") {
-                    text = data.own ? "You are now online" : `${data.name} has just arrived`
-                } else if (data.sign === "minus") {
-                    text = !data.own ? `${data.name} has left` : assertUnreachable()
-                } else {
-                    assertUnreachable()
-                }
-            } else if (data.toast === "nickChange") {
-                text = data.own ?
-                    `Your username is now: ${data.newName}` :
-                    `User "${data.oldName}" is now "${data.newName}"`
-            } else if (data.toast === "punish") {
-                text = data.text
-            } else {
-                assertUnreachable()
-            }
-            return (
-                <div className="toast" key={i}>
-                    <span className="toast-text">
-                        {text}
-                    </span>
-                </div>
-            )
-        }
-
         const renderedMessages = messages.map((data, i) => {
             if (data.type === "message") return renderMsg(data, i)
-            if (data.type === "toast") return renderToast(data, i)
+            if (data.type === "toast") return <ToastComponent data={data} key={i} />
         })
         const textField = (
             <div ref={this.textFieldRef} className="textField">
