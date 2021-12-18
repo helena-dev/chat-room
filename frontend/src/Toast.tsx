@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react"
+import React from "react"
 import { Toast } from "../../messages"
 import "./Toast.css"
 import { assertUnreachable } from "./utils"
