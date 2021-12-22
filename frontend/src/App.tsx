@@ -364,6 +364,7 @@ class App extends React.Component {
 
         const onImageInput = (event: React.FormEvent<HTMLInputElement>) => {
             const img = event.currentTarget.files![0]
+            event.currentTarget.value = ""
             const reader = new FileReader()
             reader.readAsDataURL(img)
             reader.onerror = () => this.setState({ image: undefined })

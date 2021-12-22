@@ -38,8 +38,10 @@ export default class Message extends React.Component<MessageProps> {
                         {data.image &&
                             <img src={data.image} decoding="async"></img>}
                     </span>
-                    <span className="message-text">{data.text}</span>
-                    <div className="message-time">{formatDate(msgDate)}</div>
+                    <div className="message-textTime-container">
+                        <span className="message-text">{data.text}</span>
+                        <div className="message-time">{formatDate(msgDate)}</div>
+                    </div>
                 </div>
             </div>
         )
