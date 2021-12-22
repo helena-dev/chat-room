@@ -93,7 +93,7 @@ html, body, #root, .container {
     text-overflow: ellipsis;
 }
 
-.messageField {
+.messageBodyField {
     display: flex;
     flex-direction: row;
     font-size: 15px;
@@ -168,13 +168,16 @@ html, body, #root, .container {
     border-radius: 7.5px;
     box-shadow: 0 0 5px rgb(0,0,0);
     z-index: 2;
+    align-items: flex-start;
+    gap: 10px;
 }
 
-.deleteMsgButton {
+.actionMsgButton {
     border: none;
     background-color: inherit;
     color: rgba(241, 241, 242, 0.92);
     cursor: pointer;
+    font-size: 14px;
 }
 
 .textField::-webkit-scrollbar {

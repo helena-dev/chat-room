@@ -1,0 +1,64 @@
+.replyField {
+    display: flex;
+    flex-direction: row;
+    padding: 10px 7.5% 0px;
+    justify-content: space-evenly;
+}
+
+.replyMessage {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 10px;
+    border-radius: 7.5px;
+    overflow-wrap: anywhere;
+    hyphens: auto;
+    position: relative;
+    margin-bottom: 10px;
+    border-left: 3px solid;
+}
+
+.reply-user {
+    font-weight: 500;
+    font-size: 14px;
+    color: orchid;
+}
+
+.reply-body {
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
+.reply-text {
+    white-space: break-spaces;
+    padding-right: 3px;
+    border: solid transparent;
+    border-width: 0px 0px 3px;
+    color: rgba(241, 241, 242, 0.63);
+
+}
+
+.closeReplyButton {
+    font-size: 25px;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    color: rgb(130 134 137);
+    margin-bottom: 10px;
+}
+
+.reply-body::-webkit-scrollbar {
+    width: 6px;
+    border-radius: 10px;
+}
+
+.reply-body::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px inherit;
+}
+
+.reply-body::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}
+

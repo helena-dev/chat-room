@@ -148,6 +148,7 @@ server.on("connection", (con, request) => {
                     date: new Date(),
                     cssColor: connectionData.cssColor,
                     msgNum: id,
+                    reply: data.reply,
                 })
             }
         } else if (data.type === "userName") {

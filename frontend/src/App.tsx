@@ -1,12 +1,13 @@
 import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiSend } from "@mdi/js"
+import { mdiAccountEdit, mdiClose, mdiSend, mdiSignatureImage } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
 import UserCard from "./UserCard"
 import ToastComponent from "./Toast"
 import Message from "./Message"
+import ReplyMessageComponent from "./ReplyMessage"
 
 interface AppState {
     currentNick?: string,
@@ -16,6 +17,7 @@ interface AppState {
     showPanel: boolean,
     windowWidth: number,
     menuData?: MenuData,
+    replyMsg?: ReceivedMessage
 }
 
 interface MenuData {
@@ -182,15 +184,17 @@ class App extends React.Component {
         if (text) {
             this.send({
                 type: "message",
-                text: text
+                text: text,
+                reply: this.state.replyMsg,
             })
         }
         textInput.value = ""
         textInput.style.height = "auto"
+        this.setState({ replyMsg: undefined })
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -224,6 +228,12 @@ class App extends React.Component {
             })
         }
 
+        const onReplyButtonClick = (data: ReceivedMessage) => {
+            this.setState({ replyMsg: data })
+            const textInput = this.textInputRef.current!
+            textInput.focus()
+        }
+
         const disappearMsgMenu = () => {
             this.setState({ menuData: undefined })
         }
@@ -234,21 +244,29 @@ class App extends React.Component {
             const position = data.own ?
                 { top, right: 15 + 15 } :
                 { top, left: element.offsetWidth }
-            this.setState({ menuData: {
-                position,
-                message: data,
-            } })
+            this.setState({
+                menuData: {
+                    position,
+                    message: data,
+                }
+            })
         }
 
         const messageMenu = ({ message: data, position }: MenuData) => {
             const delButton = (
-                <button className="deleteMsgButton" type="button" onClick={() => onDeleteButtonClick(data.msgNum, data.own)}>
+                <button className="actionMsgButton" type="button" onClick={() => onDeleteButtonClick(data.msgNum, data.own)}>
                     Delete
+                </button>
+            )
+            const replyButton = (
+                <button className="actionMsgButton" type="button" onClick={() => onReplyButtonClick(data)}>
+                    Reply
                 </button>
             )
             return (
                 <div className="messageMenuBkg" onClick={disappearMsgMenu}>
                     <div className="messageMenu" style={position}>
+                        {replyButton}
                         {data.own ? delButton : undefined}
                     </div>
                 </div>
@@ -259,7 +277,7 @@ class App extends React.Component {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
             const isFollowup = (i > 0 && doesMatch(messages[i - 1]))
-            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} />
+            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} reply={data.reply} />
         }
 
         const renderedMessages = messages.map((data, i) => {
@@ -300,8 +318,24 @@ class App extends React.Component {
             event.preventDefault()
             this.sendMessage()
         }
-        const messageField = (
-            <form className="messageField" autoComplete="off" onSubmit={onTextSubmit}>
+
+        const onClearReply = () => {
+            this.setState({ replyMsg: undefined })
+        }
+
+        const replyField = () => {
+            return (
+                <div className={"replyField"}>
+                    <ReplyMessageComponent data={replyMsg} />
+                    <button className="closeReplyButton" type="button" onClick={onClearReply}>
+                        <Icon path={mdiClose} size={"1em"} />
+                    </button>
+                </div>
+            )
+        }
+
+        const messageBodyField = (
+            <form className="messagBodyeField" autoComplete="off" onSubmit={onTextSubmit}>
                 <textarea ref={this.textInputRef} className="textInput" placeholder="Type a message"
                     rows={1} autoFocus maxLength={5000} onInput={(event) => { onTextInput(event); isTyping() }}
                     onKeyDown={onTextKeyDown}></textarea>
@@ -309,6 +343,13 @@ class App extends React.Component {
                     <Icon path={mdiSend} size={"1em"} />
                 </button>
             </form>
+        )
+
+        const messageField = (
+            <div>
+                {replyMsg ? replyField() : undefined}
+                {messageBodyField}
+            </div>
         )
 
         const topBarText = !currentUserList ? "Loading..." : ((data) => {

@@ -20,7 +20,8 @@
     background-color: inherit;
     border: none;
     cursor: pointer;
-    padding: 0 5px 6px 6px;
+    padding: 0 0 6px 6px;
+    margin-right: 5px;
     color: rgba(241, 241, 242, 0.6);
     opacity: 0;
     display: inline-flex;
@@ -45,6 +46,7 @@
     max-height: 30vh;
     overflow-y: auto;
     background-color: inherit;
+    padding-left: 3px;
 }
 
 .message-text {

@@ -66,11 +66,13 @@ export interface ReceivedMessage {
     date: Date;
     cssColor: string;
     msgNum: number;
+    reply?: ReceivedMessage;
 }
 
 export interface SentMessage {
     type: "message";
     text: string;
+    reply?: ReceivedMessage
 }
 
 export interface UserNameSubmit {
