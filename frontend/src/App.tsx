@@ -8,6 +8,7 @@ import UserCard from "./UserCard"
 import ToastComponent from "./Toast"
 import Message from "./Message"
 import ReplyMessageComponent from "./ReplyMessage"
+import ScrollButton from "./ScrollButton"
 
 interface AppState {
     currentNick?: string,
@@ -18,6 +19,7 @@ interface AppState {
     windowWidth: number,
     menuData?: MenuData,
     replyMsg?: ReceivedMessage
+    textFieldScroll: number
 }
 
 interface MenuData {
@@ -37,8 +39,9 @@ class App extends React.Component {
     onBlur!: () => void
     handleResize!: () => void
     goSend = true
+    resizeObserver!: ResizeObserver
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0 }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -74,6 +77,10 @@ class App extends React.Component {
         }
 
         window.addEventListener("resize", this.handleResize);
+
+        this.resizeObserver = new ResizeObserver(() => {this.recalculateScroll()})
+        this.resizeObserver.observe(this.textFieldRef.current!)
+        this.recalculateScroll()
     }
 
     componentWillUnmount() {
@@ -85,6 +92,8 @@ class App extends React.Component {
         }
 
         window.removeEventListener("resize", this.handleResize);
+
+        this.resizeObserver.disconnect()
     }
 
     send(data: FrontMessage): void {
@@ -178,7 +187,7 @@ class App extends React.Component {
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
-        textField.scrollTop = textField.scrollHeight
+        textField.scrollTop = textField.scrollHeight - textField.clientHeight
         textInput.focus()
         const text = textInput.value.trim()
         if (text) {
@@ -193,8 +202,14 @@ class App extends React.Component {
         this.setState({ replyMsg: undefined })
     }
 
+    recalculateScroll(): void {
+        const textField = this.textFieldRef.current!
+        const scroll = textField.scrollHeight - textField.scrollTop - textField.clientHeight
+        this.setState({ textFieldScroll: scroll })
+    }
+
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, textFieldScroll } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -284,9 +299,18 @@ class App extends React.Component {
             if (data.type === "message") return renderMsg(data, i)
             if (data.type === "toast") return <ToastComponent data={data} key={i} />
         })
+
+        const onScrollButtonClick = () => {
+            const textInput = this.textInputRef.current!
+            const textField = this.textFieldRef.current!
+            textField.scrollTop = textField.scrollHeight - textField.clientHeight
+            textInput.focus()
+        }
+
         const textField = (
-            <div ref={this.textFieldRef} className="textField">
+            <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()}>
                 {renderedMessages}
+                <ScrollButton onAction={onScrollButtonClick} scroll={textFieldScroll} />
             </div>
         )
 

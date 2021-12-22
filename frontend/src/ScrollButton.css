@@ -1,0 +1,25 @@
+.scrollButtonContainer {
+    position: absolute;
+    align-self: flex-end;
+    bottom: 80px;
+    margin-right: 20px;
+    background-color: rgb(38, 45, 49);
+    border-radius: 50px;
+    width: 40px;
+    height: 40px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10;
+}
+
+.scrollButton {
+    font-size: 30px;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    color: rgb(130 134 137);
+}
