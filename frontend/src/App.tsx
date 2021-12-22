@@ -229,7 +229,8 @@ class App extends React.Component {
         }
 
         const onMsgMenuButtonClick = (element: HTMLDivElement, data: ReceivedMessage) => {
-            const top = element.offsetTop + 25
+            const textField = this.textFieldRef.current!
+            const top = element.offsetTop + 25 - textField.scrollTop
             const position = data.own ?
                 { top, right: 15 + 15 } :
                 { top, left: element.offsetWidth }
