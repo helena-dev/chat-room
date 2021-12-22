@@ -138,11 +138,13 @@ server.on("connection", (con, request) => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
             if (data.text.length > 5000) return punish()
+            if (data.image && !data.image.startsWith("data:image")) return punish()
             const id = generateMsgId()
             for (const targetConnectionData of Object.values(users)) {
                 targetConnectionData.send({
                     type: "message",
                     text: data.text,
+                    image: data.image,
                     own: targetConnectionData.connection === con,
                     from: currentCon,
                     date: new Date(),

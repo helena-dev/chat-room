@@ -61,6 +61,7 @@ export interface PunishToast extends ToastBase {
 export interface ReceivedMessage {
     type: "message";
     text: string;
+    image?: string;
     own: boolean;
     from: string;
     date: Date;
@@ -72,7 +73,8 @@ export interface ReceivedMessage {
 export interface SentMessage {
     type: "message";
     text: string;
-    reply?: ReceivedMessage
+    image?: string;
+    reply?: ReceivedMessage;
 }
 
 export interface UserNameSubmit {

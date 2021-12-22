@@ -25,6 +25,13 @@
 .reply-body {
     max-height: 30vh;
     overflow-y: auto;
+    overflow-x: hidden;
+}
+
+.reply-image img {
+    width: 99%;
+    height: auto;
+    border-radius: 7.5px;
 }
 
 .reply-text {
@@ -33,7 +40,6 @@
     border: solid transparent;
     border-width: 0px 0px 3px;
     color: rgba(241, 241, 242, 0.63);
-
 }
 
 .closeReplyButton {

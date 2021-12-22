@@ -3,18 +3,24 @@ import { ReceivedMessage } from "../../messages"
 import "./ReplyMessage.css"
 
 export interface ReplyMessageProps {
-    data?: ReceivedMessage;
+    data: ReceivedMessage;
+    inMessage?: boolean;
 }
 
 export default class ReplyMessageComponent extends React.Component<ReplyMessageProps> {
     render(): React.ReactNode {
-        const { data } = this.props
-
+        const { data, inMessage } = this.props
+        const imageHeight = data.image ? "50vh" : "30vh"
+        const imageWidth = (data.image && !inMessage) ? "50%" : "100%"
         return (
-            <div className="replyMessage" style={{ borderColor: data?.cssColor }}>
-                <span className="reply-user" style={{ color: data?.cssColor }}>{data?.from}</span>
-                <div className="reply-body">
-                    <span className="reply-text">{data?.text}</span>
+            <div className="replyMessage" style={{ borderColor: data.cssColor, maxWidth: imageWidth }}>
+                <span className="reply-user" style={{ color: data.cssColor }}>{data.from}</span>
+                <div className="reply-body" style={{ maxHeight: imageHeight }}>
+                    <span className="reply-image">
+                        {data.image &&
+                            <img src={data.image.toString()} decoding="async"></img>}
+                    </span>
+                    <span className="reply-text">{data.text}</span>
                 </div>
             </div>
         )

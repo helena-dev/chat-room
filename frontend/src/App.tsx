@@ -1,7 +1,7 @@
 import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiClose, mdiSend, mdiSignatureImage } from "@mdi/js"
+import { mdiAccountEdit, mdiClose, mdiSend, mdiPaperclip, mdiSignatureImage } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
 import UserCard from "./UserCard"
@@ -19,6 +19,7 @@ interface AppState {
     windowWidth: number,
     menuData?: MenuData,
     replyMsg?: ReceivedMessage
+    image?: string
     textFieldScroll: number
 }
 
@@ -78,7 +79,7 @@ class App extends React.Component {
 
         window.addEventListener("resize", this.handleResize);
 
-        this.resizeObserver = new ResizeObserver(() => {this.recalculateScroll()})
+        this.resizeObserver = new ResizeObserver(() => { this.recalculateScroll() })
         this.resizeObserver.observe(this.textFieldRef.current!)
         this.recalculateScroll()
     }
@@ -190,16 +191,17 @@ class App extends React.Component {
         textField.scrollTop = textField.scrollHeight - textField.clientHeight
         textInput.focus()
         const text = textInput.value.trim()
-        if (text) {
+        if (text || this.state.image) {
             this.send({
                 type: "message",
                 text: text,
+                image: this.state.image,
                 reply: this.state.replyMsg,
             })
         }
         textInput.value = ""
         textInput.style.height = "auto"
-        this.setState({ replyMsg: undefined })
+        this.setState({ replyMsg: undefined, image: undefined })
     }
 
     recalculateScroll(): void {
@@ -209,7 +211,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, textFieldScroll } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -345,12 +347,14 @@ class App extends React.Component {
 
         const onClearReply = () => {
             this.setState({ replyMsg: undefined })
+            const textInput = this.textInputRef.current!
+            textInput.focus()
         }
 
         const replyField = () => {
             return (
                 <div className={"replyField"}>
-                    <ReplyMessageComponent data={replyMsg} />
+                    <ReplyMessageComponent data={replyMsg!} />
                     <button className="closeReplyButton" type="button" onClick={onClearReply}>
                         <Icon path={mdiClose} size={"1em"} />
                     </button>
@@ -358,8 +362,43 @@ class App extends React.Component {
             )
         }
 
+        const onImageInput = (event: React.FormEvent<HTMLInputElement>) => {
+            const img = event.currentTarget.files![0]
+            const reader = new FileReader()
+            reader.readAsDataURL(img)
+            reader.onerror = () => this.setState({ image: undefined })
+            reader.onload = () => {
+                const imgURL = reader.result as string
+                if (imgURL.startsWith("data:image")) {
+                    this.setState({ image: imgURL })
+                }
+            }
+            this.textInputRef.current!.focus()
+        }
+
+        const onClearImage = () => {
+            this.setState({ image: undefined })
+            const textInput = this.textInputRef.current!
+            textInput.focus()
+        }
+
+        const imagePreview = () => {
+            return (
+                <div className="messageField-image-container">
+                    <img src={image!} className="messageField-image" decoding="async"></img>
+                    <button className="closeImagePreviewButton" type="button" onClick={onClearImage}>
+                        <Icon path={mdiClose} size={"1em"} />
+                    </button>
+                </div>
+            )
+        }
+
         const messageBodyField = (
-            <form className="messagBodyeField" autoComplete="off" onSubmit={onTextSubmit}>
+            <form className="messageBodyField" autoComplete="off" onSubmit={onTextSubmit}>
+                <label className="attachLabel">
+                    <Icon path={mdiPaperclip} size={"1em"} />
+                    <input className="attachButton" type="file" accept="image/*" onInput={onImageInput} />
+                </label>
                 <textarea ref={this.textInputRef} className="textInput" placeholder="Type a message"
                     rows={1} autoFocus maxLength={5000} onInput={(event) => { onTextInput(event); isTyping() }}
                     onKeyDown={onTextKeyDown}></textarea>
@@ -372,6 +411,7 @@ class App extends React.Component {
         const messageField = (
             <div>
                 {replyMsg ? replyField() : undefined}
+                {image ? imagePreview() : undefined}
                 {messageBodyField}
             </div>
         )

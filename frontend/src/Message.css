@@ -47,6 +47,13 @@
     overflow-y: auto;
     background-color: inherit;
     padding-left: 3px;
+    overflow-x: hidden;
+}
+
+.message-image img {
+    width: 99%;
+    height: auto;
+    border-radius: 7.5px;
 }
 
 .message-text {
