@@ -309,7 +309,16 @@ class App extends React.Component {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
             const isFollowup = (i > 0 && doesMatch(messages[i - 1]))
-            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} reply={data.reply} windowWidth={windowWidth} onAction={() => onMessageImageAction(data.image)} nums={messagesNums}/>
+            return <Message
+                    data={data}
+                    key={i}
+                    followup={isFollowup}
+                    onMenu={(element) => onMsgMenuButtonClick(element, data)}
+                    reply={data.reply}
+                    windowWidth={windowWidth}
+                    onAction={() => onMessageImageAction(data.image)}
+                    nums={messagesNums}
+                    />
         }
 
         const renderedMessages = messages.map((data, i) => {
