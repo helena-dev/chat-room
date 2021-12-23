@@ -217,12 +217,18 @@ class App extends React.Component {
         this.setState({ textFieldScroll: scroll })
     }
 
+    focusWOKeyboard() {
+        const textInput = this.textInputRef.current!
+        textInput.readOnly = true
+        textInput.focus()
+        setTimeout(() => textInput.readOnly = false, 10)
+    }
+
     render() {
         const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
-            const textInput = this.textInputRef.current!
             const text = nickInput.value.trim()
             if (text && text !== this.state.currentNick) {
                 this.send({
@@ -231,7 +237,7 @@ class App extends React.Component {
                 })
             }
             nickInput.value = ""
-            textInput.focus()
+            this.focusWOKeyboard()
             event.preventDefault()
         }
 
@@ -327,10 +333,9 @@ class App extends React.Component {
         })
 
         const onScrollButtonClick = () => {
-            const textInput = this.textInputRef.current!
             const textField = this.textFieldRef.current!
             textField.scrollTop = textField.scrollHeight - textField.clientHeight
-            textInput.focus()
+            this.focusWOKeyboard()
         }
 
         const textField = (
