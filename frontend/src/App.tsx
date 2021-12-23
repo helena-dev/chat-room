@@ -417,11 +417,24 @@ class App extends React.Component {
             </div>
         )
 
-        const topBarText = !currentUserList ? "Loading..." : ((data) => {
-            const otherUsers = data.users.filter(x => !x.own).map(x => x.name)
-            otherUsers.push("You")
-            return otherUsers.join(", ")
-        })(currentUserList)
+        const topBarText = !currentUserList ? "Loading..." : ((userList, typingList) => {
+            const funcMap = new Map(typingList)
+            if (funcMap.has(currentNick!)) funcMap.delete(currentNick!)
+            const typingNum = funcMap.size
+            if (!typingNum) {
+                const userNum = userList.users.length
+                const onlineUsersNum = userList.users.filter(x => x.online).length
+                const membership = userNum === 1 ? " member" : " members"
+                return userNum + membership + (onlineUsersNum > 1 ? ", " + onlineUsersNum + " online" : "")
+            } else {
+                if (typingNum < 3) {
+                    const typing = typingNum === 1 ? " is " : " are "
+                    return Array.from(funcMap.keys()).join(", ") + typing + "typing..."
+                } else {
+                    return typingNum + " users are typing..."
+                }
+            }
+        })(currentUserList, typingUsers)
 
         const sidePanel = () => {
             const size = windowWidth >= 1170 ? " wide" : " narrow"
