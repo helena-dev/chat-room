@@ -4,12 +4,12 @@ import Icon from "@mdi/react"
 import { mdiAccountEdit, mdiClose, mdiSend, mdiPaperclip, mdiSignatureImage } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
-import UserCard from "./UserCard"
 import ToastComponent from "./Toast"
 import Message from "./Message"
 import ReplyMessageComponent from "./ReplyMessage"
 import ScrollButton from "./ScrollButton"
 import BigImage from "./BigImage"
+import SidePanel from "./SidePanel"
 
 interface AppState {
     currentNick?: string,
@@ -451,25 +451,6 @@ class App extends React.Component {
             }
         })(currentUserList, typingUsers)
 
-        const sidePanel = () => {
-            const size = windowWidth >= 1170 ? " wide" : " narrow"
-            const sortUsers = Array.from(currentUserList?.users || [])
-            const cards = sortUsers.sort((a, b) => a.own ? -1 : 0).map(user =>
-                <UserCard user={user} typingStatus={typingUsers.has(user.name)} key={user.name} />)
-            return (
-                <div className={"sidePanelContainer" + size}>
-                    <div className={"sidePanel" + size}>
-                        <header className={"upperSidePanel" + size}>
-                            Users
-                        </header>
-                        <div className={"lowerSidePanel" + size}>
-                            {cards}
-                        </div>
-                    </div>
-                </div>
-            )
-        }
-
         const onTopBarLeftClick = () => {
             this.setState({ showPanel: (showPanel ? false : true) })
         }
@@ -477,7 +458,7 @@ class App extends React.Component {
         return (
             <div className="container">
                 {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage}/> : undefined}
-                {showPanel ? sidePanel() : undefined}
+                {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers}/> : undefined}
                 <div className="app">
                     <div className="topBar">
                         <div className="topBarLeft" onClick={onTopBarLeftClick}>
