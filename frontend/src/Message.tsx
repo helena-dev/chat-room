@@ -13,6 +13,7 @@ export interface MessageProps {
     reply?: ReceivedMessage;
     windowWidth: number;
     onAction: () => void;
+    nums: number[]
 }
 
 export default class Message extends React.Component<MessageProps> {
@@ -40,7 +41,7 @@ export default class Message extends React.Component<MessageProps> {
                 <button className="msgMenuButton" type="button" onClick={() => onMenu(this.messageRef.current!)}>
                     <Icon path={mdiChevronDown} size={"1em"} />
                 </button>
-                {reply ? <ReplyMessageComponent data={reply} inMessage={true} /> : undefined}
+                {reply && nums.includes(reply.msgNum) ? <ReplyMessageComponent data={reply} inMessage={true} /> : undefined}
                 <div className="message-body" style={{ maxHeight: imageHeight }}>
                     <span className="message-image" onClick={onAction}>
                         {data.image &&

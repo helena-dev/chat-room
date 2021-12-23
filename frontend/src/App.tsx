@@ -14,6 +14,7 @@ interface AppState {
     currentNick?: string,
     currentUserList?: UserList,
     messages: (ReceivedMessage | Toast)[],
+    messagesNums: number[],
     typingUsers: Map<string, NodeJS.Timeout>,
     showPanel: boolean,
     windowWidth: number,
@@ -43,7 +44,7 @@ class App extends React.Component {
     goSend = true
     resizeObserver!: ResizeObserver
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0 }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [] }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -152,7 +153,9 @@ class App extends React.Component {
         if (document.hidden) {
             this.notification(data)
         }
-        this.setState({ messages: this.state.messages.concat([data]) })
+        const nums = this.state.messagesNums
+        nums.push(data.msgNum)
+        this.setState({ messages: this.state.messages.concat([data]), messagesNums: nums })
         const newMap = new Map(this.state.typingUsers)
         if (newMap.has(data.from)) {
             clearTimeout(newMap.get(data.from)!)
@@ -183,7 +186,9 @@ class App extends React.Component {
     receiveDeleteMsg(data: DeleteMessage) {
         const beforeMessages = this.state.messages;
         const afterMessages = beforeMessages.filter(x => x.msgNum !== data.msgNum)
-        this.setState({ messages: afterMessages })
+        const beforeNums = this.state.messagesNums
+        const afterNums = beforeNums.filter(x => x !== data.msgNum)
+        this.setState({ messages: afterMessages, messagesNums: afterNums })
     }
 
     sendMessage(): void {
@@ -212,7 +217,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -303,7 +308,7 @@ class App extends React.Component {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
             const isFollowup = (i > 0 && doesMatch(messages[i - 1]))
-            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} reply={data.reply} windowWidth={windowWidth} onAction={() => onMessageImageAction(data.image)}/>
+            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} reply={data.reply} windowWidth={windowWidth} onAction={() => onMessageImageAction(data.image)} nums={messagesNums}/>
         }
 
         const renderedMessages = messages.map((data, i) => {
