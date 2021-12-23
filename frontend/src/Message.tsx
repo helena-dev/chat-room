@@ -11,19 +11,27 @@ export interface MessageProps {
     followup: boolean;
     onMenu: (element: HTMLDivElement) => void;
     reply?: ReceivedMessage;
+    windowWidth: number;
+    onAction: () => void;
 }
 
 export default class Message extends React.Component<MessageProps> {
     messageRef = React.createRef<HTMLDivElement>()
 
     render() {
-        const { data, followup, onMenu, reply } = this.props
+        const { data, followup, onMenu, reply, onAction, nums } = this.props
+        let { windowWidth } = this.props
+        if (windowWidth > 850) windowWidth = 850
+        const [x1, x2] = [360, 850]
+        const [y1, y2] = [60, 35]
+        const m = (y2-y1)/(x2-x1)
+        const b = y2-m*x2
         const msgDate = new Date(data.date)
         let msgClass = "message"
         if (data.own) msgClass += " own"
         if (followup) msgClass += " followup"
         const imageHeight = data.image ? "100%" : "30vh"
-        const imageWidth = (data.image || reply?.image) ? "50%" : "75%"
+        const imageWidth = (data.image || reply?.image) ? m*windowWidth+b + "%" : "75%"
         return (
             <div ref={this.messageRef} className={msgClass} style={{ maxWidth: imageWidth }} id={data.msgNum.toString()}>
                 {(!data.own && !followup) ?
@@ -34,7 +42,7 @@ export default class Message extends React.Component<MessageProps> {
                 </button>
                 {reply ? <ReplyMessageComponent data={reply} inMessage={true} /> : undefined}
                 <div className="message-body" style={{ maxHeight: imageHeight }}>
-                    <span className="message-image">
+                    <span className="message-image" onClick={onAction}>
                         {data.image &&
                             <img src={data.image} decoding="async"></img>}
                     </span>

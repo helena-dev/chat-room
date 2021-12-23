@@ -54,6 +54,7 @@
     width: 99%;
     height: auto;
     border-radius: 7.5px;
+    cursor: pointer;
 }
 
 .message-textTime-container {

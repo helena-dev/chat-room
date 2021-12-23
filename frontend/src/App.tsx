@@ -21,6 +21,7 @@ interface AppState {
     replyMsg?: ReceivedMessage
     image?: string
     textFieldScroll: number
+    bigImage?: string
 }
 
 interface MenuData {
@@ -211,7 +212,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -290,11 +291,19 @@ class App extends React.Component {
             )
         }
 
+        const onMessageImageAction = (image?: string) => {
+            this.setState({ bigImage: image })
+        }
+
+        const disappearBigImage = () => {
+            this.setState({ bigImage: undefined })
+        }
+
         const renderMsg = (data: ReceivedMessage, i: number) => {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
             const isFollowup = (i > 0 && doesMatch(messages[i - 1]))
-            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} reply={data.reply} />
+            return <Message data={data} key={i} followup={isFollowup} onMenu={(element) => onMsgMenuButtonClick(element, data)} reply={data.reply} windowWidth={windowWidth} onAction={() => onMessageImageAction(data.image)}/>
         }
 
         const renderedMessages = messages.map((data, i) => {
@@ -459,8 +468,19 @@ class App extends React.Component {
             this.setState({ showPanel: (showPanel ? false : true) })
         }
 
+        const showBigImage = () => {
+            return (
+                <div className="bigImageBkg" onClick={disappearBigImage}>
+                    <div className="bigImage">
+                        <img src={bigImage} decoding="async"></img>
+                    </div>
+                </div>
+            )
+        }
+
         return (
             <div className="container">
+                {bigImage ? showBigImage() : undefined}
                 {showPanel ? sidePanel() : undefined}
                 <div className="app">
                     <div className="topBar">
