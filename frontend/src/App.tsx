@@ -9,6 +9,7 @@ import ToastComponent from "./Toast"
 import Message from "./Message"
 import ReplyMessageComponent from "./ReplyMessage"
 import ScrollButton from "./ScrollButton"
+import BigImage from "./BigImage"
 
 interface AppState {
     currentNick?: string,
@@ -473,19 +474,9 @@ class App extends React.Component {
             this.setState({ showPanel: (showPanel ? false : true) })
         }
 
-        const showBigImage = () => {
-            return (
-                <div className="bigImageBkg" onClick={disappearBigImage}>
-                    <div className="bigImage">
-                        <img src={bigImage} decoding="async"></img>
-                    </div>
-                </div>
-            )
-        }
-
         return (
             <div className="container">
-                {bigImage ? showBigImage() : undefined}
+                {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage}/> : undefined}
                 {showPanel ? sidePanel() : undefined}
                 <div className="app">
                     <div className="topBar">
