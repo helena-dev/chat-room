@@ -12,7 +12,7 @@ export default class BigImage extends React.Component<BigImageProps> {
         return (
             <div className="bigImageBkg" onClick={onAction}>
                 <div className="bigImage">
-                    <img src={image} decoding="async"></img>
+                    <img src={image} decoding="async" onClick={(event) => event.stopPropagation()}></img>
                 </div>
             </div>
         )
