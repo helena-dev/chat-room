@@ -1,9 +1,9 @@
 import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiClose, mdiSend, mdiPaperclip, mdiSignatureImage } from "@mdi/js"
+import { mdiAccountEdit, mdiClose, mdiSend, mdiPaperclip } from "@mdi/js"
 import "./App.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage } from "../../messages"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage } from "../../messages"
 import ToastComponent from "./Toast"
 import Message from "./Message"
 import ReplyMessageComponent from "./ReplyMessage"
@@ -15,15 +15,16 @@ interface AppState {
     currentNick?: string,
     currentUserList?: UserList,
     messages: (ReceivedMessage | Toast)[],
+    pseudoMessages: ReceivedMessage[],
     messagesNums: number[],
     typingUsers: Map<string, NodeJS.Timeout>,
     showPanel: boolean,
     windowWidth: number,
     menuData?: MenuData,
-    replyMsg?: ReceivedMessage
-    image?: string
-    textFieldScroll: number
-    bigImage?: string
+    replyMsg?: ReceivedMessage,
+    image?: string,
+    textFieldScroll: number,
+    bigImage?: string,
 }
 
 interface MenuData {
@@ -44,8 +45,10 @@ class App extends React.Component {
     handleResize!: () => void
     goSend = true
     resizeObserver!: ResizeObserver
+    pseudoId: number = -1
+    allMessages: (ReceivedMessage | Toast)[] = []
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [] }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [], pseudoMessages: [] }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -116,6 +119,8 @@ class App extends React.Component {
             this.receiveTyping(data)
         } else if (data.type === "deleteMsg") {
             this.receiveDeleteMsg(data)
+        } else if (data.type === "ackMessage") {
+            this.receiveAckMessage(data)
         } else {
             assertUnreachable()
         }
@@ -192,6 +197,24 @@ class App extends React.Component {
         this.setState({ messages: afterMessages, messagesNums: afterNums })
     }
 
+    receiveAckMessage(data: AckMessage) {
+        console.log(data)
+        const beforeMessages = this.state.pseudoMessages
+        for (const msg of beforeMessages) {
+            if (msg.type === "message" && msg.msgNum === data.pseudoId) {
+                msg.date = data.date
+                msg.cssColor = data.cssColor
+                msg.msgNum = data.msgNum
+                const nums = this.state.messagesNums
+                nums.push(msg.msgNum)
+                this.setState({ messageNums: nums })
+                const afterMessages = beforeMessages.filter(x => x !== msg)
+                this.setState({ pseudoMessages: afterMessages })
+                this.setState({ messages: this.state.messages.concat([msg]) })
+            }
+        }
+    }
+
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
@@ -199,12 +222,26 @@ class App extends React.Component {
         textInput.focus()
         const text = textInput.value.trim()
         if (text || this.state.image) {
+            const pseudoMsg: ReceivedMessage = {
+                type: "message",
+                text: text,
+                image: this.state.image,
+                own: true,
+                from: this.state.currentNick!,
+                date: new Date(),
+                cssColor: "hsl(0, 100%, 50%)",
+                msgNum: this.pseudoId,
+                reply: this.state.replyMsg,
+            }
+            this.setState({ pseudoMessages: this.state.pseudoMessages.concat([pseudoMsg]) })
             this.send({
                 type: "message",
                 text: text,
                 image: this.state.image,
                 reply: this.state.replyMsg,
+                pseudoId: this.pseudoId
             })
+            this.pseudoId--
         }
         textInput.value = ""
         textInput.style.height = "auto"
@@ -225,7 +262,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums, pseudoMessages } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -314,23 +351,28 @@ class App extends React.Component {
         const renderMsg = (data: ReceivedMessage, i: number) => {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
-            const isFollowup = (i > 0 && doesMatch(messages[i - 1]))
+            const isFollowup = (i > 0 && doesMatch(this.allMessages[i - 1]))
             return <Message
-                    data={data}
-                    key={i}
-                    followup={isFollowup}
-                    onMenu={(element) => onMsgMenuButtonClick(element, data)}
-                    reply={data.reply}
-                    windowWidth={windowWidth}
-                    onAction={() => onMessageImageAction(data.image)}
-                    nums={messagesNums}
-                    />
+                data={data}
+                key={i}
+                followup={isFollowup}
+                onMenu={(element) => onMsgMenuButtonClick(element, data)}
+                reply={data.reply}
+                windowWidth={windowWidth}
+                onAction={() => onMessageImageAction(data.image)}
+                nums={messagesNums}
+            />
         }
 
-        const renderedMessages = messages.map((data, i) => {
-            if (data.type === "message") return renderMsg(data, i)
-            if (data.type === "toast") return <ToastComponent data={data} key={i} />
-        })
+        const renderedMessages = () => {
+            const msgs = messages
+            const allmsgs = msgs.concat(pseudoMessages)
+            this.allMessages = allmsgs
+            return this.allMessages.map((data, i) => {
+                if (data.type === "message") return renderMsg(data, i)
+                if (data.type === "toast") return <ToastComponent data={data} key={i} />
+            })
+        }
 
         const onScrollButtonClick = () => {
             const textField = this.textFieldRef.current!
@@ -340,7 +382,7 @@ class App extends React.Component {
 
         const textField = (
             <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()}>
-                {renderedMessages}
+                {renderedMessages()}
                 <ScrollButton onAction={onScrollButtonClick} scroll={textFieldScroll} />
             </div>
         )
@@ -471,8 +513,8 @@ class App extends React.Component {
 
         return (
             <div className="container">
-                {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage}/> : undefined}
-                {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers}/> : undefined}
+                {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage} /> : undefined}
+                {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers} /> : undefined}
                 <div className="app">
                     <div className="topBar">
                         <div className="topBarLeft" onClick={onTopBarLeftClick}>

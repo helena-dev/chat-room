@@ -1,4 +1,4 @@
-import { mdiChevronDown } from "@mdi/js"
+import { mdiChevronDown, mdiProgressClock, mdiCheck } from "@mdi/js"
 import Icon from "@mdi/react"
 import React from "react"
 import { ReceivedMessage } from "../../messages"
@@ -25,14 +25,14 @@ export default class Message extends React.Component<MessageProps> {
         if (windowWidth > 850) windowWidth = 850
         const [x1, x2] = [360, 850]
         const [y1, y2] = [60, 35]
-        const m = (y2-y1)/(x2-x1)
-        const b = y2-m*x2
+        const m = (y2 - y1) / (x2 - x1)
+        const b = y2 - m * x2
         const msgDate = new Date(data.date)
         let msgClass = "message"
         if (data.own) msgClass += " own"
         if (followup) msgClass += " followup"
         const imageHeight = data.image ? "100%" : "30vh"
-        const imageWidth = (data.image || reply?.image) ? m*windowWidth+b + "%" : "75%"
+        const imageWidth = (data.image || reply?.image) ? m * windowWidth + b + "%" : "75%"
         return (
             <div ref={this.messageRef} className={msgClass} style={{ maxWidth: imageWidth }} id={data.msgNum.toString()}>
                 {(!data.own && !followup) ?
@@ -49,7 +49,12 @@ export default class Message extends React.Component<MessageProps> {
                     </span>
                     <div className="message-textTime-container">
                         <span className="message-text">{data.text}</span>
-                        <div className="message-time">{formatDate(msgDate)}</div>
+                        <div className="message-infoContainer">
+                            <div className="message-time">{formatDate(msgDate)}</div>
+                            <span className="message-check">
+                                <Icon path={data.msgNum < 0 ? mdiProgressClock : mdiCheck} size={"1em"} />
+                            </span>
+                        </div>
                     </div>
                 </div>
             </div>

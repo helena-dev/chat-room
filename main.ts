@@ -133,7 +133,7 @@ server.on("connection", (con, request) => {
             console.log(`Got geolocation info for connection ${currentCon}:`, info)
             sendUserList()
         })
-        
+
     con.on("message", chunk => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
@@ -141,23 +141,33 @@ server.on("connection", (con, request) => {
             if (data.image && !data.image.startsWith("data:image")) return punish()
             const id = generateMsgId()
             for (const targetConnectionData of Object.values(users)) {
-                targetConnectionData.send({
-                    type: "message",
-                    text: data.text,
-                    image: data.image,
-                    own: targetConnectionData.connection === con,
-                    from: currentCon,
-                    date: new Date(),
-                    cssColor: connectionData.cssColor,
-                    msgNum: id,
-                    reply: data.reply,
-                })
+                if (targetConnectionData.connection !== con) {
+                    targetConnectionData.send({
+                        type: "message",
+                        text: data.text,
+                        image: data.image,
+                        own: targetConnectionData.connection === con,
+                        from: currentCon,
+                        date: new Date(),
+                        cssColor: connectionData.cssColor,
+                        msgNum: id,
+                        reply: data.reply,
+                    })
+                } else if (targetConnectionData.connection === con) {
+                    targetConnectionData.send({
+                        type: "ackMessage",
+                        date: new Date(),
+                        cssColor: connectionData.cssColor,
+                        msgNum: id,
+                        pseudoId: data.pseudoId
+                    })
+                }
             }
         } else if (data.type === "userName") {
             changeName(data.text)
         } else if (data.type === "isOnline") {
             connectionData.online = data.online
-            connectionData.lastActivity= new Date()
+            connectionData.lastActivity = new Date()
             sendUserList()
         } else if (data.type === "typing") {
             for (const targetConnectionData of Object.values(users)) {

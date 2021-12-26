@@ -3,14 +3,16 @@ export type BackMessage =
     Toast |
     ReceivedMessage |
     UserTyping |
-    DeleteMessage
+    DeleteMessage |
+    AckMessage
 
 export type FrontMessage =
     SentMessage |
     UserNameSubmit |
     IsOnlineCheck |
     IsTyping |
-    DeleteMessage
+    DeleteMessage |
+    AckMessage
 
 export interface UserList {
     type: "userList";
@@ -75,6 +77,7 @@ export interface SentMessage {
     text: string;
     image?: string;
     reply?: ReceivedMessage;
+    pseudoId: number;
 }
 
 export interface UserNameSubmit {
@@ -99,4 +102,12 @@ export interface UserTyping {
 export interface DeleteMessage {
     type: "deleteMsg";
     msgNum: number;
+}
+
+export interface AckMessage {
+    type: "ackMessage";
+    date: Date;
+    cssColor: string;
+    msgNum: number;
+    pseudoId: number
 }
