@@ -11,6 +11,7 @@ import ScrollButton from "./ScrollButton"
 import BigImage from "./BigImage"
 import SidePanel from "./SidePanel"
 import AppMenu from "./AppMenu"
+import ColorPicker from "./ColorPicker"
 
 interface AppState {
     currentNick?: string,
@@ -27,6 +28,7 @@ interface AppState {
     textFieldScroll: number,
     bigImage?: string,
     showAppMenu: boolean,
+    currentColor: [number, number, number],
 }
 
 interface MenuData {
@@ -50,7 +52,7 @@ class App extends React.Component {
     pseudoId: number = -1
     allMessages: (ReceivedMessage | Toast)[] = []
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [], pseudoMessages: [], showAppMenu: false }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [], pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24] }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -264,7 +266,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums, pseudoMessages, showAppMenu } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums, pseudoMessages, showAppMenu, currentColor } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -383,7 +385,7 @@ class App extends React.Component {
         }
 
         const textField = (
-            <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()}>
+            <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()} style={{ backgroundColor: "rgb(" + currentColor + ")"}}>
                 {renderedMessages()}
                 <ScrollButton onAction={onScrollButtonClick} scroll={textFieldScroll} />
             </div>
@@ -522,6 +524,17 @@ class App extends React.Component {
             this.setState({ showAppMenu: false })
         }
 
+        const onColorSubmit = (event: React.FormEvent<HTMLFormElement>, [red, green, blue]: [React.RefObject<HTMLInputElement>, React.RefObject<HTMLInputElement>, React.RefObject<HTMLInputElement>]) => {
+            const colors = [red.current!, green.current!, blue.current!]
+            const rgb = colors.map(x => x.value ? parseInt(x.value) : parseInt(x.placeholder))
+            if (rgb) this.setState({ currentColor: rgb })
+            for (const color of colors) {
+                color.value = ""
+            }
+            this.focusWOKeyboard()
+            event.preventDefault()
+        }
+
         const topBar = (
             <div className="topBar">
                 <div className="topBarLeft" onClick={onTopBarLeftClick}>
@@ -529,7 +542,7 @@ class App extends React.Component {
                     <p className="topBarText">{topBarText}</p>
                 </div>
                 <div className="topBarRight">
-                    <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} childs={[nickField]} />
+                    <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} childs={[nickField, <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />]} />
                 </div>
             </div>
         )
