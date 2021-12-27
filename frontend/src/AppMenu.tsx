@@ -6,18 +6,16 @@ import "./AppMenu.css"
 export interface AppMenuProps {
     AppMenuAction: () => void;
     show: boolean;
-    childs: JSX.Element[];
 }
 
 export default class AppMenu extends React.Component<AppMenuProps> {
     render() {
-        const { AppMenuAction, show, childs } = this.props
+        const { AppMenuAction, show, children } = this.props
 
         const renderAppMenu = () => {
             return (
                 <div className="appMenu" onClick={(event) => event.stopPropagation()}>
-                    {childs[0]}
-                    {childs[1]}
+                    {children}
                 </div>
             )
         }

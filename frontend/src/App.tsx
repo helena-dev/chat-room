@@ -538,7 +538,10 @@ class App extends React.Component {
                     <p className="topBarText">{topBarText}</p>
                 </div>
                 <div className="topBarRight">
-                    <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} childs={[<NickField currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef}/>, <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />]} />
+                    <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} >
+                        <NickField currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef} />
+                        <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />
+                    </AppMenu>
                 </div>
             </div>
         )
