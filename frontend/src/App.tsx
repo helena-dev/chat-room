@@ -1,7 +1,7 @@
 import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiAccountEdit, mdiClose, mdiSend, mdiPaperclip } from "@mdi/js"
+import { mdiClose, mdiSend, mdiPaperclip} from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage } from "../../messages"
 import ToastComponent from "./Toast"
@@ -12,6 +12,7 @@ import BigImage from "./BigImage"
 import SidePanel from "./SidePanel"
 import AppMenu from "./AppMenu"
 import ColorPicker from "./ColorPicker"
+import NickField from "./NickField"
 
 interface AppState {
     currentNick?: string,
@@ -281,15 +282,6 @@ class App extends React.Component {
             event.preventDefault()
         }
 
-        const nickField = (
-            <form className="nickField" autoComplete="off" onSubmit={onNickSubmit}>
-                <input ref={this.nickInputRef} type="text" className="nickInput" placeholder={currentNick || "Write your nick"} maxLength={20} />
-                <button className="nickButton" type="submit">
-                    <Icon path={mdiAccountEdit} size={"1em"} />
-                </button>
-            </form>
-        )
-
         const onDeleteButtonClick = (i: number, own: boolean) => {
             if (!own) return
             this.send({
@@ -546,7 +538,7 @@ class App extends React.Component {
                     <p className="topBarText">{topBarText}</p>
                 </div>
                 <div className="topBarRight">
-                    <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} childs={[nickField, <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />]} />
+                    <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} childs={[<NickField currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef}/>, <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />]} />
                 </div>
             </div>
         )
