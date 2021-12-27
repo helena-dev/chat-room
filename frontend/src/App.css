@@ -187,7 +187,7 @@ html, body, #root, .container {
     color: inherit;
     outline: none;
     border-radius: 7.5px;
-    width: 135px
+    width: 135px;
 }
 
 .nickButton {
@@ -199,6 +199,7 @@ html, body, #root, .container {
     display: inline-flex;
     justify-content: center;
     align-items: center;
+    justify-self: flex-end;
 }
 
 .messageMenuBkg {

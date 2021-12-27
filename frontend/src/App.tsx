@@ -10,6 +10,7 @@ import ReplyMessageComponent from "./ReplyMessage"
 import ScrollButton from "./ScrollButton"
 import BigImage from "./BigImage"
 import SidePanel from "./SidePanel"
+import AppMenu from "./AppMenu"
 
 interface AppState {
     currentNick?: string,
@@ -25,6 +26,7 @@ interface AppState {
     image?: string,
     textFieldScroll: number,
     bigImage?: string,
+    showAppMenu: boolean,
 }
 
 interface MenuData {
@@ -48,7 +50,7 @@ class App extends React.Component {
     pseudoId: number = -1
     allMessages: (ReceivedMessage | Toast)[] = []
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [], pseudoMessages: [] }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [], pseudoMessages: [], showAppMenu: false }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -262,7 +264,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums, pseudoMessages } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums, pseudoMessages, showAppMenu } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -511,20 +513,33 @@ class App extends React.Component {
             this.setState({ showPanel: (showPanel ? false : true) })
         }
 
+        const openAppMenu = () => {
+            if (showAppMenu) this.setState({ showAppMenu: false })
+            if (!showAppMenu) this.setState({ showAppMenu: true })
+        }
+
+        const disappearAppMenu = () => {
+            this.setState({ showAppMenu: false })
+        }
+
+        const topBar = (
+            <div className="topBar">
+                <div className="topBarLeft" onClick={onTopBarLeftClick}>
+                    <h2 className="topBarTitle">Chat-room</h2>
+                    <p className="topBarText">{topBarText}</p>
+                </div>
+                <div className="topBarRight">
+                    <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} childs={[nickField]} />
+                </div>
+            </div>
+        )
+
         return (
             <div className="container">
                 {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage} /> : undefined}
                 {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers} /> : undefined}
-                <div className="app">
-                    <div className="topBar">
-                        <div className="topBarLeft" onClick={onTopBarLeftClick}>
-                            <h2 className="topBarTitle">Chat-room</h2>
-                            <p className="topBarText">{topBarText}</p>
-                        </div>
-                        <div className="topBarRight">
-                            {nickField}
-                        </div>
-                    </div>
+                <div className="app" onClick={disappearAppMenu}>
+                    {topBar}
                     {textField}
                     {menuData ? messageMenu(menuData) : undefined}
                     {messageField}
