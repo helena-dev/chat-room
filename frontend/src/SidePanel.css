@@ -25,6 +25,7 @@
 .sidePanel.narrow {
     background-color: transparent;
     margin: 12px 0 10vh;
+    overflow-y: hidden;
 }
 
 .upperSidePanel.narrow {
