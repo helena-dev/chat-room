@@ -1,6 +1,6 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { WebSocket, WebSocketServer } from "ws"
-import { getMagicColorSequence, normalizeIP } from "./utils.js"
+import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
 import type { BackMessage, FrontMessage } from "./messages"
 
 let ipinfo: IPinfoWrapper;
@@ -138,7 +138,10 @@ server.on("connection", (con, request) => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
             if (data.text.length > 5000) return punish()
-            if (data.image && !data.image.startsWith("data:image")) return punish()
+            if (data.image) {
+                const matches = decodeDataURL(data.image)
+                if (!matches || matches[0].startsWith("image/") || matches[1].length > 30 * 2 ** 20) return punish()
+            }
             const id = generateMsgId()
             for (const targetConnectionData of Object.values(users)) {
                 if (targetConnectionData.connection !== con) {

@@ -202,7 +202,6 @@ class App extends React.Component {
     }
 
     receiveAckMessage(data: AckMessage) {
-        console.log(data)
         const beforeMessages = this.state.pseudoMessages
         for (const msg of beforeMessages) {
             if (msg.type === "message" && msg.msgNum === data.pseudoId) {
@@ -385,7 +384,7 @@ class App extends React.Component {
         }
 
         const textField = (
-            <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()} style={{ backgroundColor: "rgb(" + currentColor + ")"}}>
+            <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()} style={{ backgroundColor: "rgb(" + currentColor + ")" }}>
                 {renderedMessages()}
                 <ScrollButton onAction={onScrollButtonClick} scroll={textFieldScroll} />
             </div>
@@ -441,10 +440,15 @@ class App extends React.Component {
             const img = event.currentTarget.files![0]
             event.currentTarget.value = ""
             const reader = new FileReader()
-            reader.readAsDataURL(img)
+            if (img.size > 30 * 2 ** 20) {
+                window.alert("The maximum file size is 30 MiB")
+            } else {
+                reader.readAsDataURL(img)
+            }
             reader.onerror = () => this.setState({ image: undefined })
             reader.onload = () => {
                 const imgURL = reader.result as string
+                console.log(imgURL)
                 if (imgURL.startsWith("data:image")) {
                     this.setState({ image: imgURL })
                 }
