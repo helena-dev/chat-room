@@ -51,9 +51,13 @@ export default class Message extends React.Component<MessageProps> {
                         <span className="message-text">{data.text}</span>
                         <div className="message-infoContainer">
                             <div className="message-time">{formatDate(msgDate)}</div>
-                            <span className="message-check">
-                                <Icon path={data.msgNum < 0 ? mdiProgressClock : mdiCheck} size={"1em"} />
-                            </span>
+                            {data.own ?
+                                <span className="message-check">
+                                    <Icon path={data.msgNum < 0 ? mdiProgressClock : mdiCheck} size={"1em"} />
+                                </span> :
+                                undefined
+                            }
+
                         </div>
                     </div>
                 </div>
