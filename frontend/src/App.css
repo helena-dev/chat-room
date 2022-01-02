@@ -149,8 +149,9 @@ html, body, #root, .container {
 
 .textInput {
     flex: 1;
-    padding: 9px 12px 9px;
+    padding: 9px 0px 9px 12px;
     border: 1px solid rgb(51, 56, 59);
+    border-right: 12px solid rgb(51, 56, 59);
     background-color: rgb(51, 56, 59);
     margin: 5px 10px;
     font-size: 15px;
@@ -158,9 +159,10 @@ html, body, #root, .container {
     outline: none;
     border-radius: 19px;
     resize: none;
-    overflow: hidden;
+    overflow: auto;
     box-sizing: border-box;
     font-family: inherit;
+    max-height: 50vh;
 }
 
 .sendButton {
@@ -210,6 +212,20 @@ html, body, #root, .container {
 }
 
 .textField::-webkit-scrollbar-thumb {
+    background-color: rgba(82, 82, 82, 0.7);
+    border-radius: 10px;
+}
+
+.textInput::-webkit-scrollbar {
+    width: 6px;
+}
+
+.textInput::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+    margin: 5px 0px;
+}
+
+.textInput::-webkit-scrollbar-thumb {
     background-color: rgba(82, 82, 82, 0.7);
     border-radius: 10px;
 }
