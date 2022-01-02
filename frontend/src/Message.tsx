@@ -1,6 +1,7 @@
 import { mdiChevronDown, mdiProgressClock, mdiCheck } from "@mdi/js"
 import Icon from "@mdi/react"
 import React from "react"
+import Markdown from 'markdown-to-jsx'
 import { ReceivedMessage } from "../../messages"
 import "./Message.css"
 import ReplyMessageComponent from "./ReplyMessage"
@@ -48,7 +49,7 @@ export default class Message extends React.Component<MessageProps> {
                             <img src={data.image} decoding="async"></img>}
                     </span>
                     <div className="message-textTime-container">
-                        <span className="message-text">{data.text}</span>
+                        <span className="message-text"><Markdown options={{ disableParsingRawHTML: true, forceInline: true }}>{data.text}</Markdown></span>
                         <div className="message-infoContainer">
                             <div className="message-time">{formatDate(msgDate)}</div>
                             {data.own ?
