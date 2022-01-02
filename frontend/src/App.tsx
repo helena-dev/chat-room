@@ -1,7 +1,7 @@
 import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiClose, mdiSend, mdiPaperclip } from "@mdi/js"
+import { mdiClose, mdiSend, mdiPaperclip, mdiReply, mdiDelete, mdiPencil } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage } from "../../messages"
 import ToastComponent from "./Toast"
@@ -196,7 +196,7 @@ class App extends React.Component {
     }
 
     receiveDeleteMsg(data: DeleteMessage) {
-        if(data.msgNum === this.state.replyMsg) {
+        if (data.msgNum === this.state.replyMsg) {
             this.setState({ replyMsg: undefined })
         }
         const beforeMessages = this.state.messages;
@@ -236,14 +236,19 @@ class App extends React.Component {
         textInput.focus()
         const text = textInput.value.trim()
         if (text && this.state.editMsg) {
-            const msg = this.state.editMsg
-            msg.text = text
-            msg.edited = true
-            this.send({
-                type: "edit",
-                msgNum: msg.msgNum,
-                text,
-            })
+            if(text !== this.state.editMsg.text) {
+                const msg = this.state.editMsg
+                msg.text = text
+                msg.edited = true
+                this.send({
+                    type: "edit",
+                    msgNum: msg.msgNum,
+                    text,
+                })
+            } else {
+                textInput.value = ""
+                textInput.style.height = "auto"
+            }
             this.setState({ editMsg: undefined })
         } else if (text || this.state.image) {
             const pseudoMsg: ReceivedMessage = {
@@ -358,17 +363,20 @@ class App extends React.Component {
         const messageMenu = ({ message: data, position }: MenuData) => {
             const delButton = (
                 <button className="actionMsgButton" type="button" onClick={() => onDeleteButtonClick(data.msgNum, data.own)}>
-                    Delete
+                    <Icon path={mdiDelete} size={"1em"} />
+                    <span className="actionMsgButtonName">Delete</span>
                 </button>
             )
             const replyButton = (
                 <button className="actionMsgButton" type="button" onClick={() => onReplyButtonClick(data)}>
-                    Reply
+                    <Icon path={mdiReply} size={"1em"} />
+                    <span className="actionMsgButtonName">Reply</span>
                 </button>
             )
             const editButton = (
                 <button className="actionMsgButton" type="button" onClick={() => onEditButtonClick(data)}>
-                    Edit
+                    <Icon path={mdiPencil} size={"1em"} />
+                    <span className="actionMsgButtonName">Edit</span>
                 </button>
             )
             return (
