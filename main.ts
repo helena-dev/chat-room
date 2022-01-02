@@ -155,6 +155,7 @@ server.on("connection", (con, request) => {
                         cssColor: connectionData.cssColor,
                         msgNum: id,
                         replyNum: data.replyNum,
+                        edited: false,
                     })
                 } else if (targetConnectionData.connection === con) {
                     targetConnectionData.send({
@@ -185,6 +186,14 @@ server.on("connection", (con, request) => {
                 targetConnectionData.send({
                     type: "deleteMsg",
                     msgNum: msgId,
+                })
+            }
+        } else if (data.type === "edit") {
+            for (const targetConnectionData of Object.values(users)) {
+                targetConnectionData.send({
+                    type: "edit",
+                    msgNum: data.msgNum,
+                    text: data.text,
                 })
             }
         } else {

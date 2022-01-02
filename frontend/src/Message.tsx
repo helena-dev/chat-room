@@ -14,14 +14,13 @@ export interface MessageProps {
     reply?: ReceivedMessage;
     windowWidth: number;
     onAction: () => void;
-    nums: number[]
 }
 
 export default class Message extends React.Component<MessageProps> {
     messageRef = React.createRef<HTMLDivElement>()
 
     render() {
-        const { data, followup, onMenu, reply, onAction, nums } = this.props
+        const { data, followup, onMenu, reply, onAction } = this.props
         let { windowWidth } = this.props
         if (windowWidth > 850) windowWidth = 850
         const [x1, x2] = [360, 850]
@@ -42,7 +41,7 @@ export default class Message extends React.Component<MessageProps> {
                 <button className="msgMenuButton" type="button" onClick={() => onMenu(this.messageRef.current!)}>
                     <Icon path={mdiChevronDown} size={"1em"} />
                 </button>
-                {reply && nums.includes(reply.msgNum) ? <ReplyMessageComponent data={reply} inMessage={true} /> : undefined}
+                {reply ? <ReplyMessageComponent data={reply} inMessage={true} /> : undefined}
                 <div className="message-body" style={{ maxHeight: imageHeight }}>
                     <span className="message-image" onClick={onAction}>
                         {data.image &&
@@ -51,6 +50,7 @@ export default class Message extends React.Component<MessageProps> {
                     <div className="message-textTime-container">
                         <span className="message-text"><Markdown options={{ disableParsingRawHTML: true, forceInline: true }}>{data.text}</Markdown></span>
                         <div className="message-infoContainer">
+                            {data.edited ? <span className="message-edited">edited</span> : undefined}
                             <div className="message-time">{formatDate(msgDate)}</div>
                             {data.own ?
                                 <span className="message-check">

@@ -1,9 +1,9 @@
 import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiClose, mdiSend, mdiPaperclip} from "@mdi/js"
+import { mdiClose, mdiSend, mdiPaperclip } from "@mdi/js"
 import "./App.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage } from "../../messages"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage } from "../../messages"
 import ToastComponent from "./Toast"
 import Message from "./Message"
 import ReplyMessageComponent from "./ReplyMessage"
@@ -13,6 +13,7 @@ import SidePanel from "./SidePanel"
 import AppMenu from "./AppMenu"
 import ColorPicker from "./ColorPicker"
 import NickField from "./NickField"
+import EditField from "./EditField"
 
 interface AppState {
     currentNick?: string,
@@ -24,6 +25,7 @@ interface AppState {
     windowWidth: number,
     menuData?: MenuData,
     replyMsg?: number,
+    editMsg?: ReceivedMessage,
     image?: string,
     textFieldScroll: number,
     bigImage?: string,
@@ -125,6 +127,8 @@ class App extends React.Component {
             this.receiveDeleteMsg(data)
         } else if (data.type === "ackMessage") {
             this.receiveAckMessage(data)
+        } else if (data.type === "edit") {
+            this.receiveEditMessage(data)
         } else {
             assertUnreachable()
         }
@@ -163,7 +167,7 @@ class App extends React.Component {
         if (document.hidden) {
             this.notification(data)
         }
-        this.setState({ messages: this.state.messages.concat([data])})
+        this.setState({ messages: this.state.messages.concat([data]) })
         const newMap = new Map(this.state.typingUsers)
         if (newMap.has(data.from)) {
             clearTimeout(newMap.get(data.from)!)
@@ -194,7 +198,7 @@ class App extends React.Component {
     receiveDeleteMsg(data: DeleteMessage) {
         const beforeMessages = this.state.messages;
         const afterMessages = beforeMessages.filter(x => x.msgNum !== data.msgNum)
-        this.setState({ messages: afterMessages})
+        this.setState({ messages: afterMessages })
     }
 
     receiveAckMessage(data: AckMessage) {
@@ -211,13 +215,34 @@ class App extends React.Component {
         }
     }
 
+    receiveEditMessage(data: EditMessage) {
+        const messageList = this.state.messages
+        const msgIndex = messageList.findIndex(message => message.msgNum === data.msgNum)
+        const msg = messageList[msgIndex]
+        if (msg.type === "message") {
+            msg.text = data.text
+            msg.edited = true
+        }
+        this.setState({ messages: messageList })
+    }
+
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
         textField.scrollTop = textField.scrollHeight - textField.clientHeight
         textInput.focus()
         const text = textInput.value.trim()
-        if (text || this.state.image) {
+        if (text && this.state.editMsg) {
+            const msg = this.state.editMsg
+            msg.text = text
+            msg.edited = true
+            this.send({
+                type: "edit",
+                msgNum: msg.msgNum,
+                text,
+            })
+            this.setState({ editMsg: undefined })
+        } else if (text || this.state.image) {
             const pseudoMsg: ReceivedMessage = {
                 type: "message",
                 text: text,
@@ -228,6 +253,7 @@ class App extends React.Component {
                 cssColor: "hsl(0, 100%, 50%)",
                 msgNum: this.pseudoId,
                 replyNum: this.state.replyMsg,
+                edited: false,
             }
             this.setState({ pseudoMessages: this.state.pseudoMessages.concat([pseudoMsg]) })
             this.send({
@@ -258,7 +284,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -283,9 +309,21 @@ class App extends React.Component {
         }
 
         const onReplyButtonClick = (data: ReceivedMessage) => {
-            this.setState({ replyMsg: data.msgNum })
-            const textInput = this.textInputRef.current!
-            textInput.focus()
+            if (!editMsg) {
+                this.setState({ replyMsg: data.msgNum })
+                const textInput = this.textInputRef.current!
+                textInput.focus()
+            }
+        }
+
+        const onEditButtonClick = (data: ReceivedMessage) => {
+            if (!replyMsg) {
+                if (!data.own) return
+                this.setState({ editMsg: data })
+                const textInput = this.textInputRef.current!
+                textInput.value = data.text
+                textInput.focus()
+            }
         }
 
         const disappearMsgMenu = () => {
@@ -317,10 +355,16 @@ class App extends React.Component {
                     Reply
                 </button>
             )
+            const editButton = (
+                <button className="actionMsgButton" type="button" onClick={() => onEditButtonClick(data)}>
+                    Edit
+                </button>
+            )
             return (
                 <div className="messageMenuBkg" onClick={disappearMsgMenu}>
                     <div className="messageMenu" style={position}>
                         {replyButton}
+                        {data.own ? editButton : undefined}
                         {data.own ? delButton : undefined}
                     </div>
                 </div>
@@ -409,6 +453,12 @@ class App extends React.Component {
             textInput.focus()
         }
 
+        const onClearEdit = () => {
+            this.setState({ editMsg: undefined })
+            const textInput = this.textInputRef.current!
+            textInput.focus()
+        }
+
         const replyField = () => {
             const reply = this.allMessages.find(x => (x.msgNum === replyMsg)) as ReceivedMessage | undefined
             return (
@@ -461,7 +511,9 @@ class App extends React.Component {
             <form className="messageBodyField" autoComplete="off" onSubmit={onTextSubmit}>
                 <label className="attachLabel">
                     <Icon path={mdiPaperclip} size={"1em"} />
-                    <input className="attachButton" type="file" accept="image/*" onInput={onImageInput} />
+                    {!editMsg ?
+                        <input className="attachButton" type="file" accept="image/*" onInput={onImageInput} /> :
+                        undefined}
                 </label>
                 <textarea ref={this.textInputRef} className="textInput" placeholder="Type a message"
                     rows={1} autoFocus maxLength={5000} onInput={(event) => { onTextInput(event); isTyping() }}
@@ -474,6 +526,7 @@ class App extends React.Component {
 
         const messageField = (
             <div>
+                {editMsg ? <EditField data={editMsg} onAction={onClearEdit} /> : undefined}
                 {replyMsg ? replyField() : undefined}
                 {image ? imagePreview() : undefined}
                 {messageBodyField}

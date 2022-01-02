@@ -4,7 +4,8 @@ export type BackMessage =
     ReceivedMessage |
     UserTyping |
     DeleteMessage |
-    AckMessage
+    AckMessage |
+    EditMessage
 
 export type FrontMessage =
     SentMessage |
@@ -12,7 +13,7 @@ export type FrontMessage =
     IsOnlineCheck |
     IsTyping |
     DeleteMessage |
-    AckMessage
+    EditMessage
 
 export interface UserList {
     type: "userList";
@@ -70,6 +71,7 @@ export interface ReceivedMessage {
     cssColor: string;
     msgNum: number;
     replyNum?: number;
+    edited: boolean;
 }
 
 export interface SentMessage {
@@ -109,5 +111,11 @@ export interface AckMessage {
     date: Date;
     cssColor: string;
     msgNum: number;
-    pseudoId: number
+    pseudoId: number;
+}
+
+export interface EditMessage {
+    type: "edit";
+    msgNum: number;
+    text: string;
 }

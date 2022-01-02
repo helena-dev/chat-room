@@ -90,7 +90,7 @@
     gap: 5px;
 }
 
-.message-time {
+.message-time, .message-edited{
     font-size: 12px;
 }
 
