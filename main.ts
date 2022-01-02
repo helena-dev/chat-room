@@ -140,7 +140,7 @@ server.on("connection", (con, request) => {
             if (data.text.length > 5000) return punish()
             if (data.image) {
                 const matches = decodeDataURL(data.image)
-                if (!matches || matches[0].startsWith("image/") || matches[1].length > 30 * 2 ** 20) return punish()
+                if (!matches || !matches[0].startsWith("image/") || matches[1].length > 30 * 2 ** 20) return punish()
             }
             const id = generateMsgId()
             for (const targetConnectionData of Object.values(users)) {
