@@ -19,12 +19,11 @@ interface AppState {
     currentUserList?: UserList,
     messages: (ReceivedMessage | Toast)[],
     pseudoMessages: ReceivedMessage[],
-    messagesNums: number[],
     typingUsers: Map<string, NodeJS.Timeout>,
     showPanel: boolean,
     windowWidth: number,
     menuData?: MenuData,
-    replyMsg?: ReceivedMessage,
+    replyMsg?: number,
     image?: string,
     textFieldScroll: number,
     bigImage?: string,
@@ -53,7 +52,7 @@ class App extends React.Component {
     pseudoId: number = -1
     allMessages: (ReceivedMessage | Toast)[] = []
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, messagesNums: [], pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24] }
+    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24] }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -164,9 +163,7 @@ class App extends React.Component {
         if (document.hidden) {
             this.notification(data)
         }
-        const nums = this.state.messagesNums
-        nums.push(data.msgNum)
-        this.setState({ messages: this.state.messages.concat([data]), messagesNums: nums })
+        this.setState({ messages: this.state.messages.concat([data])})
         const newMap = new Map(this.state.typingUsers)
         if (newMap.has(data.from)) {
             clearTimeout(newMap.get(data.from)!)
@@ -197,9 +194,7 @@ class App extends React.Component {
     receiveDeleteMsg(data: DeleteMessage) {
         const beforeMessages = this.state.messages;
         const afterMessages = beforeMessages.filter(x => x.msgNum !== data.msgNum)
-        const beforeNums = this.state.messagesNums
-        const afterNums = beforeNums.filter(x => x !== data.msgNum)
-        this.setState({ messages: afterMessages, messagesNums: afterNums })
+        this.setState({ messages: afterMessages})
     }
 
     receiveAckMessage(data: AckMessage) {
@@ -209,9 +204,6 @@ class App extends React.Component {
                 msg.date = data.date
                 msg.cssColor = data.cssColor
                 msg.msgNum = data.msgNum
-                const nums = this.state.messagesNums
-                nums.push(msg.msgNum)
-                this.setState({ messageNums: nums })
                 const afterMessages = beforeMessages.filter(x => x !== msg)
                 this.setState({ pseudoMessages: afterMessages })
                 this.setState({ messages: this.state.messages.concat([msg]) })
@@ -235,14 +227,14 @@ class App extends React.Component {
                 date: new Date(),
                 cssColor: "hsl(0, 100%, 50%)",
                 msgNum: this.pseudoId,
-                reply: this.state.replyMsg,
+                replyNum: this.state.replyMsg,
             }
             this.setState({ pseudoMessages: this.state.pseudoMessages.concat([pseudoMsg]) })
             this.send({
                 type: "message",
                 text: text,
                 image: this.state.image,
-                reply: this.state.replyMsg,
+                replyNum: this.state.replyMsg,
                 pseudoId: this.pseudoId
             })
             this.pseudoId--
@@ -266,7 +258,7 @@ class App extends React.Component {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, messagesNums, pseudoMessages, showAppMenu, currentColor } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -291,7 +283,7 @@ class App extends React.Component {
         }
 
         const onReplyButtonClick = (data: ReceivedMessage) => {
-            this.setState({ replyMsg: data })
+            this.setState({ replyMsg: data.msgNum })
             const textInput = this.textInputRef.current!
             textInput.focus()
         }
@@ -347,15 +339,15 @@ class App extends React.Component {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
             const isFollowup = (i > 0 && doesMatch(this.allMessages[i - 1]))
+            const reply = this.allMessages.find(x => (x.msgNum === data.replyNum)) as ReceivedMessage | undefined
             return <Message
                 data={data}
                 key={i}
                 followup={isFollowup}
                 onMenu={(element) => onMsgMenuButtonClick(element, data)}
-                reply={data.reply}
+                reply={reply}
                 windowWidth={windowWidth}
                 onAction={() => onMessageImageAction(data.image)}
-                nums={messagesNums}
             />
         }
 
@@ -418,9 +410,10 @@ class App extends React.Component {
         }
 
         const replyField = () => {
+            const reply = this.allMessages.find(x => (x.msgNum === replyMsg)) as ReceivedMessage | undefined
             return (
                 <div className={"replyField"}>
-                    <ReplyMessageComponent data={replyMsg!} />
+                    <ReplyMessageComponent data={reply!} />
                     <button className="closeReplyButton" type="button" onClick={onClearReply}>
                         <Icon path={mdiClose} size={"1em"} />
                     </button>
@@ -440,7 +433,6 @@ class App extends React.Component {
             reader.onerror = () => this.setState({ image: undefined })
             reader.onload = () => {
                 const imgURL = reader.result as string
-                console.log(imgURL)
                 if (imgURL.startsWith("data:image")) {
                     this.setState({ image: imgURL })
                 }

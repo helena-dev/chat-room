@@ -69,14 +69,14 @@ export interface ReceivedMessage {
     date: Date;
     cssColor: string;
     msgNum: number;
-    reply?: ReceivedMessage;
+    replyNum?: number;
 }
 
 export interface SentMessage {
     type: "message";
     text: string;
     image?: string;
-    reply?: ReceivedMessage;
+    replyNum?: number;
     pseudoId: number;
 }
 
