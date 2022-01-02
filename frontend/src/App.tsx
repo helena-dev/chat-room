@@ -196,6 +196,9 @@ class App extends React.Component {
     }
 
     receiveDeleteMsg(data: DeleteMessage) {
+        if(data.msgNum === this.state.replyMsg) {
+            this.setState({ replyMsg: undefined })
+        }
         const beforeMessages = this.state.messages;
         const afterMessages = beforeMessages.filter(x => x.msgNum !== data.msgNum)
         this.setState({ messages: afterMessages })
@@ -302,6 +305,14 @@ class App extends React.Component {
 
         const onDeleteButtonClick = (i: number, own: boolean) => {
             if (!own) return
+            if (editMsg?.msgNum) {
+                this.setState({ editMsg: undefined })
+                this.setState({ editMsg: undefined })
+                const textInput = this.textInputRef.current!
+                textInput.value = ""
+                textInput.style.height = "auto"
+                this.focusWOKeyboard()
+            }
             this.send({
                 type: "deleteMsg",
                 msgNum: i,
