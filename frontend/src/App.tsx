@@ -94,6 +94,9 @@ class App extends React.Component {
         this.resizeObserver = new ResizeObserver(() => { this.recalculateScroll() })
         this.resizeObserver.observe(this.textFieldRef.current!)
         this.recalculateScroll()
+
+        this.textFieldRef.current!.style.backgroundSize = `auto ${window.screen.height*0.75}px`
+        console.log(window.screen.height)
     }
 
     componentWillUnmount() {
@@ -236,7 +239,7 @@ class App extends React.Component {
         textInput.focus()
         const text = textInput.value.trim()
         if (text && this.state.editMsg) {
-            if(text !== this.state.editMsg.text) {
+            if (text !== this.state.editMsg.text) {
                 const msg = this.state.editMsg
                 msg.text = text
                 msg.edited = true

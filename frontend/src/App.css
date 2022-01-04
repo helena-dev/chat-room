@@ -41,9 +41,8 @@ html, body, #root, .container {
     flex: 1;
     overflow-y: scroll;
     background: rgb(13, 20, 24);
-    background-image: url(assets/bkg_image_opacity_006.png);
+    background-image: url(assets/bkg_image_squares_015_gray.png);
     background-repeat: repeat;
-    background-position: center;
     display: flex;
     padding-bottom: 12px;
     flex-direction: column;
