@@ -1,7 +1,7 @@
 import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
-import { mdiClose, mdiSend, mdiPaperclip, mdiReply, mdiDelete, mdiPencil } from "@mdi/js"
+import { mdiClose, mdiPaperclip, mdiSend } from "@mdi/js"
 import "./App.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage } from "../../messages"
 import ToastComponent from "./Toast"
@@ -14,6 +14,7 @@ import AppMenu from "./AppMenu"
 import ColorPicker from "./ColorPicker"
 import NickField from "./NickField"
 import EditField from "./EditField"
+import MessageMenu from "./MessageMenu"
 
 interface AppState {
     currentNick?: string,
@@ -95,8 +96,7 @@ class App extends React.Component {
         this.resizeObserver.observe(this.textFieldRef.current!)
         this.recalculateScroll()
 
-        this.textFieldRef.current!.style.backgroundSize = `auto ${window.screen.height*0.75}px`
-        console.log(window.screen.height)
+        this.textFieldRef.current!.style.backgroundSize = `auto ${window.screen.height * 0.75}px`
     }
 
     componentWillUnmount() {
@@ -350,8 +350,15 @@ class App extends React.Component {
         }
 
         const onMsgMenuButtonClick = (element: HTMLDivElement, data: ReceivedMessage) => {
+            const msgButtonBottom = element.children.namedItem("msgMenuButton")!.getBoundingClientRect().bottom
+            const msgButtonHeight = element.children.namedItem("msgMenuButton")!.clientHeight
+            const bottom = window.innerHeight - msgButtonBottom
+            const height = data.own ? 110 : 46 /* FIXME hardcoded message menu height*/
             const textField = this.textFieldRef.current!
-            const top = element.offsetTop + 25 - textField.scrollTop
+            let top = element.offsetTop + msgButtonHeight - textField.scrollTop
+            if (bottom < height) {
+                top -= height + msgButtonHeight
+            }
             const position = data.own ?
                 { top, right: 15 + 15 } :
                 { top, left: element.offsetWidth }
@@ -361,36 +368,6 @@ class App extends React.Component {
                     message: data,
                 }
             })
-        }
-
-        const messageMenu = ({ message: data, position }: MenuData) => {
-            const delButton = (
-                <button className="actionMsgButton" type="button" onClick={() => onDeleteButtonClick(data.msgNum, data.own)}>
-                    <Icon path={mdiDelete} size={"1em"} />
-                    <span className="actionMsgButtonName">Delete</span>
-                </button>
-            )
-            const replyButton = (
-                <button className="actionMsgButton" type="button" onClick={() => onReplyButtonClick(data)}>
-                    <Icon path={mdiReply} size={"1em"} />
-                    <span className="actionMsgButtonName">Reply</span>
-                </button>
-            )
-            const editButton = (
-                <button className="actionMsgButton" type="button" onClick={() => onEditButtonClick(data)}>
-                    <Icon path={mdiPencil} size={"1em"} />
-                    <span className="actionMsgButtonName">Edit</span>
-                </button>
-            )
-            return (
-                <div className="messageMenuBkg" onClick={disappearMsgMenu}>
-                    <div className="messageMenu" style={position}>
-                        {replyButton}
-                        {data.own ? editButton : undefined}
-                        {data.own ? delButton : undefined}
-                    </div>
-                </div>
-            )
         }
 
         const onMessageImageAction = (image?: string) => {
@@ -414,6 +391,7 @@ class App extends React.Component {
                 reply={reply}
                 windowWidth={windowWidth}
                 onAction={() => onMessageImageAction(data.image)}
+                showButton={menuData?.message.msgNum === data.msgNum}
             />
         }
 
@@ -478,6 +456,8 @@ class App extends React.Component {
         const onClearEdit = () => {
             this.setState({ editMsg: undefined })
             const textInput = this.textInputRef.current!
+            textInput.value = ""
+            textInput.style.height = "auto"
             textInput.focus()
         }
 
@@ -620,7 +600,15 @@ class App extends React.Component {
                 <div className="app" onClick={disappearAppMenu}>
                     {topBar}
                     {textField}
-                    {menuData ? messageMenu(menuData) : undefined}
+                    {menuData ?
+                        <MessageMenu
+                            menuData={menuData}
+                            onDelete={onDeleteButtonClick}
+                            onReply={onReplyButtonClick}
+                            onEdit={onEditButtonClick}
+                            disappear={disappearMsgMenu}
+                        /> :
+                        undefined}
                     {messageField}
                 </div>
             </div >

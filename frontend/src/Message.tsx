@@ -14,13 +14,21 @@ export interface MessageProps {
     reply?: ReceivedMessage;
     windowWidth: number;
     onAction: () => void;
+    showButton: boolean
+}
+
+export interface MessageState {
+    opacityBool: boolean
 }
 
 export default class Message extends React.Component<MessageProps> {
     messageRef = React.createRef<HTMLDivElement>()
 
+    state: MessageState = { opacityBool: false }
+
     render() {
-        const { data, followup, onMenu, reply, onAction } = this.props
+        const { data, followup, onMenu, reply, onAction, showButton } = this.props
+        const { opacityBool } = this.state
         let { windowWidth } = this.props
         if (windowWidth > 850) windowWidth = 850
         const [x1, x2] = [360, 850]
@@ -33,12 +41,16 @@ export default class Message extends React.Component<MessageProps> {
         if (followup) msgClass += " followup"
         const imageHeight = data.image ? "100%" : "30vh"
         const imageWidth = (data.image || reply?.image) ? m * windowWidth + b + "%" : "75%"
+        const opacity = (showButton || opacityBool) ? 1 : 0
         return (
             <div ref={this.messageRef} className={msgClass} style={{ maxWidth: imageWidth }} id={data.msgNum.toString()}>
                 {(!data.own && !followup) ?
                     <span className="message-user" style={{ color: data.cssColor }}>{data.from}</span> :
                     null}
-                <button className="msgMenuButton" type="button" onClick={() => onMenu(this.messageRef.current!)}>
+                <button className="msgMenuButton" name="msgMenuButton" style={{ opacity }} type="button"
+                    onClick={() => onMenu(this.messageRef.current!)}
+                    onMouseOver={() => this.setState({ opacityBool: true })}
+                    onMouseOut={() => this.setState({ opacityBool: false })}>
                     <Icon path={mdiChevronDown} size={"1em"} />
                 </button>
                 {reply ? <ReplyMessageComponent data={reply} inMessage={true} /> : undefined}

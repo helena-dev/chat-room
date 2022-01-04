@@ -1,0 +1,38 @@
+.messageMenuBkg {
+    position: absolute;
+    background-color: transparent;
+    z-index: 10;
+}
+
+.messageMenu {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    background-color: hsl(202, 9%, 18%);
+    padding: 7.5px 0;
+    border-radius: 7.5px;
+    box-shadow: 0 0 5px rgb(0, 0, 0);
+    align-items: flex-start;
+}
+
+.actionMsgButton {
+    display: flex;
+    flex-direction: row;
+    gap: 7.5px;
+    border: none;
+    background-color: inherit;
+    color: rgba(241, 241, 242, 0.92);
+    cursor: pointer;
+    font-size: 16px;
+    padding: 7.5px 22px 7.5px 10px;
+    align-self: stretch;
+}
+
+.actionMsgButton:hover {
+    background-color: hsl(202, 9%, 25%);
+}
+
+.actionMsgButtonName {
+    text-align: left;
+    font-size: 14px;
+}

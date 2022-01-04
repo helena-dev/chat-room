@@ -14,7 +14,6 @@ export default class ColorPicker extends React.Component<ColorPickerProps> {
     blueInputRef = React.createRef<HTMLInputElement>()
     render() {
         const { onSubmit, currentColor } = this.props
-        console.log(currentColor)
         return (
             <form className="colorField" autoComplete="off" onSubmit={(event) => onSubmit(event, [this.redInputRef, this.greenInputRef, this.blueInputRef])}>
                 <div className="colorInputContainer">

@@ -32,10 +32,6 @@
     right: 0;
 }
 
-.msgMenuButton:hover {
-    opacity: 1;
-}
-
 .message-user {
     font-weight: 500;
     font-size: 14px;
