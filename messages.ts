@@ -5,7 +5,8 @@ export type BackMessage =
     UserTyping |
     DeleteMessage |
     AckMessage |
-    EditMessage
+    EditMessage |
+    LoginResponse
 
 export type FrontMessage =
     SentMessage |
@@ -13,7 +14,8 @@ export type FrontMessage =
     IsOnlineCheck |
     IsTyping |
     DeleteMessage |
-    EditMessage
+    EditMessage |
+    LoginRequest
 
 export interface UserList {
     type: "userList";
@@ -118,4 +120,15 @@ export interface EditMessage {
     type: "edit";
     msgNum: number;
     text: string;
+}
+
+export interface LoginRequest {
+    type: "login";
+    userName: string;
+    password: string;
+}
+
+export interface LoginResponse {
+    type: "login";
+    ok: boolean;
 }

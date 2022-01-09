@@ -34,6 +34,10 @@ interface ChatScreenState {
     currentColor: [number, number, number],
 }
 
+export interface ChatScreenProps {
+    onSendMessage: (data: FrontMessage) => void
+}
+
 interface MenuData {
     position: {
         top: number,
@@ -43,8 +47,7 @@ interface MenuData {
     message: ReceivedMessage,
 }
 
-class ChatScreen extends React.Component {
-    con?: WebSocket
+class ChatScreen extends React.Component<ChatScreenProps> {
     bell?: HTMLAudioElement
     bellReady = false
     onFocus!: () => void
@@ -62,9 +65,6 @@ class ChatScreen extends React.Component {
     nickInputRef = React.createRef<HTMLInputElement>()
 
     componentDidMount() {
-        this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
-        this.con.onmessage = (event) => this.receive(event)
-
         this.bell = new Audio("assets/bell.oga")
         this.bell.addEventListener("canplaythrough", event => {
             this.bellReady = true;
@@ -100,7 +100,6 @@ class ChatScreen extends React.Component {
     }
 
     componentWillUnmount() {
-        this.con?.close()
         window.removeEventListener("focus", this.onFocus)
         window.removeEventListener("blur", this.onBlur)
         for (const [key, value] of this.state.typingUsers) {
@@ -113,11 +112,10 @@ class ChatScreen extends React.Component {
     }
 
     send(data: FrontMessage): void {
-        this.con!.send(JSON.stringify(data))
+        this.props.onSendMessage(data)
     }
 
-    receive(msgEvent: MessageEvent): void {
-        const data: BackMessage = JSON.parse(msgEvent.data)
+    receive(data: BackMessage): void {
         if (data.type === "userList") {
             this.receiveUserList(data)
         } else if (data.type === "message") {

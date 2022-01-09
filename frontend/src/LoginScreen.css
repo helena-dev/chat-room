@@ -1,0 +1,82 @@
+.loginBiggestContainer {
+    background: rgb(42, 47, 50);
+    color: rgba(241, 241, 242, 0.9);
+    display: flex;
+    justify-content: center;
+    height: 100%;
+}
+
+.loginContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    align-self: center;
+}
+
+.loginTitle {
+    text-align: center;
+    margin: 0;
+}
+
+.loginForm {
+    align-self: center;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 30px;
+    border-radius: 7.5px;
+    background: rgb(30 36 40);
+}
+
+.loginInputLabel {
+    display: inline-flex;
+    align-content: space-between;
+    gap: 10px;
+    align-items: center;
+}
+
+.loginInputLabel span {
+    padding-left: 5px;
+}
+
+.loginInput {
+    align-self: flex-end;
+    padding: 6px 8px;
+    border: 1px solid rgb(51, 56, 59);
+    background-color: rgb(51, 56, 59);
+    font-size: 15px;
+    color: inherit;
+    outline: none;
+    border-radius: 7.5px;
+    width: 135px;
+}
+
+.loginSpan {
+    width: 5em;
+}
+
+.loginButton {
+    cursor: pointer;
+    border: none;
+    border-radius: 7.5px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: fit-content;
+    background-color: hsl(240, 4%, 95%);
+    color: rgb(51, 56, 59);
+    padding: 8px 15px;
+    gap: 5px;
+    align-self: flex-end;
+    margin-top: 10px;
+}
+
+.loginButton:hover, .loginButton:focus {
+    background-color: hsl(240, 4%, 80%);
+}
+
+.loginError {
+    padding: 15px;
+    border-radius: 7.5px;
+    background: rgb(30 36 40);
+}

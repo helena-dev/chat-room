@@ -1,7 +1,7 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
-import { WebSocket, WebSocketServer } from "ws"
+import { RawData, WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
-import type { BackMessage, FrontMessage } from "./messages"
+import type { BackMessage, FrontMessage, LoginRequest } from "./messages"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -12,7 +12,7 @@ if (!process.env.IPINFO_TOKEN) {
 
 interface ConnectionData {
     connection: WebSocket
-    currentIP?: IPinfo
+    currentIP: IPinfo
     lastActivity: Date
     online: boolean
     colorNum: number
@@ -32,7 +32,42 @@ server.on("connection", (con, request) => {
     const socket = request.socket
     const normedIP = normalizeIP(socket.remoteAddress!)
     console.log(`A connection has arrived! Its number is ${conNum}.\nIts IP and port are: ${normedIP}, ${socket.remotePort}`)
-    let currentCon = `Foo${conNum}`
+    const ipinfoPromise = ipinfo.lookupIp(normedIP)
+    
+    let completed = false
+    function send(data: BackMessage) {
+        con.send(JSON.stringify(data))
+    }
+    const handleLogin = async (data: LoginRequest) => {
+        const valid = await checkCredentials(data.userName, data.password)
+        const connectionIpInfo = await ipinfoPromise
+        send({
+            type: "login",
+            ok: valid,
+        })
+        if (valid && !completed) {
+            completed = true
+            con.off("message", messageHandler)
+            handlePostLogin(con, connectionIpInfo, data.userName)
+        }
+    }
+
+    const messageHandler = (chunk: RawData) => {
+        const data: FrontMessage = JSON.parse(chunk.toString())
+        if (data.type === "login") {
+            handleLogin(data)
+        } else {
+            con.close()
+        }
+    }
+    con.on("message", messageHandler)
+})
+
+async function checkCredentials(userName: string, password: string) {
+    return userName === password
+}
+
+const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => {
     conNum++
 
     const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
@@ -46,10 +81,11 @@ server.on("connection", (con, request) => {
 
     const connectionData: ConnectionData = {
         connection: con,
-        currentIP: undefined,
+        currentIP: ipinfo,
         lastActivity: new Date(),
         online: true,
         colorNum: findNum(colorNumSet),
+
         get cssColor() {
             if (currentCon === process.env.SPECIAL_USER_COLOR) {
                 return "orchid"
@@ -126,13 +162,6 @@ server.on("connection", (con, request) => {
 
     sendUserList()
     userNumChange("plus")
-
-    ipinfo.lookupIp(normedIP)
-        .then(info => {
-            connectionData.currentIP = info
-            console.log(`Got geolocation info for connection ${currentCon}:`, info)
-            sendUserList()
-        })
 
     con.on("message", chunk => {
         const data: FrontMessage = JSON.parse(chunk.toString())
@@ -218,6 +247,6 @@ server.on("connection", (con, request) => {
         userNumChange("minus")
         sendUserList()
     })
-})
+}
 
 server.on("listening", () => console.log("The server is up and running."))
