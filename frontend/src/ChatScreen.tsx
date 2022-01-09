@@ -2,7 +2,7 @@ import React from "react"
 import { assertUnreachable } from "./utils"
 import Icon from "@mdi/react"
 import { mdiClose, mdiPaperclip, mdiSend } from "@mdi/js"
-import "./App.css"
+import "./ChatScreen.css"
 import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage } from "../../messages"
 import ToastComponent from "./Toast"
 import Message from "./Message"
@@ -16,7 +16,7 @@ import NickField from "./NickField"
 import EditField from "./EditField"
 import MessageMenu from "./MessageMenu"
 
-interface AppState {
+interface ChatScreenState {
     currentNick?: string,
     currentUserList?: UserList,
     messages: (ReceivedMessage | Toast)[],
@@ -43,7 +43,7 @@ interface MenuData {
     message: ReceivedMessage,
 }
 
-class App extends React.Component {
+class ChatScreen extends React.Component {
     con?: WebSocket
     bell?: HTMLAudioElement
     bellReady = false
@@ -55,7 +55,7 @@ class App extends React.Component {
     pseudoId: number = -1
     allMessages: (ReceivedMessage | Toast)[] = []
 
-    state: AppState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24] }
+    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24] }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -632,9 +632,9 @@ class App extends React.Component {
         return this.preAutoscroll()
     }
 
-    componentDidUpdate(prevProps: {}, prevState: AppState, snapshot: number) {
+    componentDidUpdate(prevProps: {}, prevState: ChatScreenState, snapshot: number) {
         this.postAutoscroll(snapshot)
     }
 }
 
-export default App
+export default ChatScreen
