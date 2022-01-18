@@ -146,6 +146,7 @@
     overflow: auto;
     box-sizing: border-box;
     font-family: inherit;
+    min-height: 38px;
     max-height: 50vh;
 }
 

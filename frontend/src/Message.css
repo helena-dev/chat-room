@@ -62,12 +62,10 @@
 .message-text {
     white-space: break-spaces;
     padding-right: 3px;
-    border: solid transparent;
     border-width: 0px 0px 3px;
 }
 
 .message.own .message-text {
-    border: solid transparent;
     border-width: 3px 0px;
 }
 

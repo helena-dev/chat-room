@@ -23,7 +23,6 @@
 }
 
 .reply-body {
-    max-height: 30vh;
     overflow-y: auto;
     overflow-x: hidden;
 }
@@ -37,7 +36,6 @@
 .reply-text {
     white-space: break-spaces;
     padding-right: 3px;
-    border: solid transparent;
     border-width: 0px 0px 3px;
     color: rgba(241, 241, 242, 0.63);
 }
