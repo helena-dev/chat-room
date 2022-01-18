@@ -6,7 +6,9 @@ export type BackMessage =
     DeleteMessage |
     AckMessage |
     EditMessage |
-    LoginResponse
+    LoginResponse |
+    SignupResponse |
+    UpdateBkgColor
 
 export type FrontMessage =
     SentMessage |
@@ -15,7 +17,9 @@ export type FrontMessage =
     IsTyping |
     DeleteMessage |
     EditMessage |
-    LoginRequest
+    LoginRequest |
+    SignupRequest |
+    UpdateBkgColor
 
 export interface UserList {
     type: "userList";
@@ -131,4 +135,21 @@ export interface LoginRequest {
 export interface LoginResponse {
     type: "login";
     ok: boolean;
+}
+
+export interface SignupRequest {
+    type: "signup";
+    userName: string;
+    password: string;
+}
+
+export interface SignupResponse {
+    type: "signup";
+    ok: boolean;
+    err: number;
+}
+
+export interface UpdateBkgColor {
+    type: "bkgColor";
+    color: number;
 }

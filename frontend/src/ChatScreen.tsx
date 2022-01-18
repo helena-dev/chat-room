@@ -1,9 +1,9 @@
 import React from "react"
-import { assertUnreachable } from "./utils"
+import { assertUnreachable, rgbToHex, hexToRgb } from "./utils"
 import Icon from "@mdi/react"
 import { mdiClose, mdiPaperclip, mdiSend } from "@mdi/js"
 import "./ChatScreen.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage } from "../../messages"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor } from "../../messages"
 import ToastComponent from "./Toast"
 import Message from "./Message"
 import ReplyMessageComponent from "./ReplyMessage"
@@ -130,6 +130,8 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             this.receiveAckMessage(data)
         } else if (data.type === "edit") {
             this.receiveEditMessage(data)
+        } else if (data.type === "bkgColor") {
+            this.receiveBkgColor(data)
         } else {
             assertUnreachable()
         }
@@ -228,6 +230,10 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             msg.edited = true
         }
         this.setState({ messages: messageList })
+    }
+
+    receiveBkgColor(data: UpdateBkgColor) {
+        this.setState({ currentColor: hexToRgb(data.color) })
     }
 
     sendMessage(): void {
@@ -568,7 +574,13 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         const onColorSubmit = (event: React.FormEvent<HTMLFormElement>, [red, green, blue]: [React.RefObject<HTMLInputElement>, React.RefObject<HTMLInputElement>, React.RefObject<HTMLInputElement>]) => {
             const colors = [red.current!, green.current!, blue.current!]
             const rgb = colors.map(x => x.value ? parseInt(x.value) : parseInt(x.placeholder))
-            if (rgb) this.setState({ currentColor: rgb })
+            if (rgb) {
+                this.setState({ currentColor: rgb })
+                this.send({
+                    type: "bkgColor",
+                    color: rgbToHex(rgb)
+                })
+            }
             for (const color of colors) {
                 color.value = ""
             }

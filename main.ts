@@ -1,7 +1,9 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { RawData, WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
-import type { BackMessage, FrontMessage, LoginRequest } from "./messages"
+import type { BackMessage, FrontMessage, LoginRequest, SignupRequest } from "./messages"
+import { Connection, createConnection } from 'mysql2/promise'
+import { createServer } from "http"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -26,14 +28,25 @@ let msgNum = 0
 function generateMsgId() {
     return msgNum++
 }
+let mysqlCon: Connection;
+if (!process.env.SQL_URL) {
+    throw "SQL DB does not exist.\r\n"
+} else {
+    createConnection(process.env.SQL_URL)
+        .then((con) => {
+            mysqlCon = con
+            httpServer.listen({ port: 8080 }, () => console.log("The server is up and running."))
+        })
+}
+const httpServer = createServer()
+const server = new WebSocketServer({ server: httpServer });
 
-const server = new WebSocketServer({ port: 8080 });
 server.on("connection", (con, request) => {
     const socket = request.socket
     const normedIP = normalizeIP(socket.remoteAddress!)
     console.log(`A connection has arrived! Its number is ${conNum}.\nIts IP and port are: ${normedIP}, ${socket.remotePort}`)
     const ipinfoPromise = ipinfo.lookupIp(normedIP)
-    
+
     let completed = false
     function send(data: BackMessage) {
         con.send(JSON.stringify(data))
@@ -51,11 +64,27 @@ server.on("connection", (con, request) => {
             handlePostLogin(con, connectionIpInfo, data.userName)
         }
     }
+    const handleSignup = async (data: SignupRequest) => {
+        const code = await addCredentials(data.userName, data.password)
+        const connectionIpInfo = await ipinfoPromise
+        send({
+            type: "signup",
+            ok: true,
+            err: code,
+        })
+        if (code === 0 && !completed) {
+            completed = true
+            con.off("message", messageHandler)
+            handlePostLogin(con, connectionIpInfo, data.userName)
+        }
+    }
 
     const messageHandler = (chunk: RawData) => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "login") {
             handleLogin(data)
+        } else if (data.type === "signup") {
+            handleSignup(data)
         } else {
             con.close()
         }
@@ -64,7 +93,19 @@ server.on("connection", (con, request) => {
 })
 
 async function checkCredentials(userName: string, password: string) {
-    return userName === password
+    const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name = ? LIMIT 1;", [userName])
+    if (rows.length === 0) return false
+    const sqlPassword = rows[0].password
+    return password === sqlPassword
+}
+
+async function addCredentials(userName: string, password: string) {
+    try {
+        await mysqlCon.execute("INSERT INTO users (user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?);", [userName, 857112, password, new Date()])
+        return 0
+    } catch (err) {
+        return (err as any).errno
+    }
 }
 
 const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => {
@@ -99,24 +140,29 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
     }
     users[currentCon] = connectionData
 
-    function changeName(text: string) {
+    async function changeName(text: string) {
         if (text.length > 20) return punish()
         if (text in users) return
         const oldName = currentCon
-        users[text] = connectionData
-        delete users[oldName]
-        currentCon = text
-        sendUserList()
-        const id = generateMsgId()
-        for (const connectionData of Object.values(users)) {
-            connectionData.send({
-                type: "toast",
-                toast: "nickChange",
-                oldName,
-                newName: currentCon,
-                own: (connectionData.connection === con),
-                msgNum: id,
-            })
+        try {
+            await mysqlCon.execute("UPDATE users SET user_name = ? WHERE user_name = ?;", [text, oldName])
+            users[text] = connectionData
+            delete users[oldName]
+            currentCon = text
+            sendUserList()
+            const id = generateMsgId()
+            for (const connectionData of Object.values(users)) {
+                connectionData.send({
+                    type: "toast",
+                    toast: "nickChange",
+                    oldName,
+                    newName: currentCon,
+                    own: (connectionData.connection === con),
+                    msgNum: id,
+                })
+            }
+        } catch {
+            return
         }
     }
 
@@ -160,6 +206,13 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
         }
     }
 
+    mysqlCon.execute<any[]>("SELECT bkg_color FROM users WHERE user_name = ?", [currentCon])
+        .then(([rows, fields]) => {
+            connectionData.send({
+                type: "bkgColor",
+                color: rows[0].bkg_color,
+            })
+        }, () => console.log("efe"))
     sendUserList()
     userNumChange("plus")
 
@@ -200,7 +253,12 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
             changeName(data.text)
         } else if (data.type === "isOnline") {
             connectionData.online = data.online
-            connectionData.lastActivity = new Date()
+            if (!data.online) {
+                const date = new Date()
+                connectionData.lastActivity = date
+                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name = ?;", [date, currentCon])
+                    .catch(() => console.log("efe"))
+            }
             sendUserList()
         } else if (data.type === "typing") {
             for (const targetConnectionData of Object.values(users)) {
@@ -225,6 +283,9 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
                     text: data.text,
                 })
             }
+        } else if (data.type === "bkgColor") {
+            mysqlCon.execute("UPDATE users SET bkg_color = ? WHERE user_name = ?;", [data.color, currentCon])
+                .catch(() => console.log("efe"))
         } else {
             throw Error("owo")
         }
@@ -243,10 +304,12 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
 
     con.on("close", () => {
         console.log(`User ${currentCon} has left. :(`)
+        if (users[currentCon].online) {
+            mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name = ?;", [new Date(), currentCon])
+                .catch(() => console.log("efe"))
+        }
         delete users[currentCon]
         userNumChange("minus")
         sendUserList()
     })
 }
-
-server.on("listening", () => console.log("The server is up and running."))

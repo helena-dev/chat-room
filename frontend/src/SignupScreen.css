@@ -79,16 +79,6 @@
     background-color: hsl(240, 4%, 80%);
 }
 
-.signupRedirect {
-    align-self: center;
-}
-
-.signupRedirectButton {
-    color: inherit;
-    text-decoration: underline;
-    cursor: pointer;
-}
-
 .loginError {
     padding: 15px;
     border-radius: 7.5px;

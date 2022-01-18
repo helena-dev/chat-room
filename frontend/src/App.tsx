@@ -1,21 +1,24 @@
 import React from "react"
-import { BackMessage, FrontMessage, LoginResponse } from "../../messages"
+import { BackMessage, FrontMessage, LoginResponse, SignupResponse } from "../../messages"
 import "./App.css"
 import ChatScreen from "./ChatScreen"
 import LoginScreen from "./LoginScreen"
+import SignupScreen from "./SignupScreen"
 import { assertUnreachable } from "./utils"
 
 export interface AppState {
     phase: "login" | "connected"
-    failedLogin: boolean
+    failed: boolean
+    signup: boolean
+    usedUsername: boolean
 }
 
 export default class App extends React.Component {
     con?: WebSocket
     chatScreenRef = React.createRef<ChatScreen>()
-    failedLoginTimeout: any
+    failedTimeout: any
 
-    state: AppState = { phase: "login", failedLogin: false }
+    state: AppState = { phase: "login", failed: false, signup: false, usedUsername: false }
 
     componentDidMount() {
         this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
@@ -28,9 +31,9 @@ export default class App extends React.Component {
     }
 
     cancelTimeout() {
-        if (this.failedLoginTimeout) {
-            clearTimeout(this.failedLoginTimeout)
-            this.failedLoginTimeout = undefined
+        if (this.failedTimeout) {
+            clearTimeout(this.failedTimeout)
+            this.failedTimeout = undefined
         }
     }
 
@@ -42,30 +45,32 @@ export default class App extends React.Component {
         const data: BackMessage = JSON.parse(event.data)
         const { phase } = this.state
         if (phase === "login") {
-            if (data.type === "login") {
-                this.receiveLoginRespone(data)
-            }
+            this.receiveResponse(data as LoginResponse | SignupResponse)
         } else if (phase === "connected") {
             this.chatScreenRef.current?.receive(data)
         }
     }
 
-    receiveLoginRespone(data: LoginResponse) {
+    receiveResponse(data: LoginResponse | SignupResponse) {
         if (data.ok) {
             this.cancelTimeout()
             this.setState({ phase: "connected" })
         } else if (!data.ok) {
+            if (data.type === "signup" && data.err === 1062) {
+                this.setState({ usedUsername: true })
+            }
             this.cancelTimeout()
-            this.setState({ failedLogin: true })
-            this.failedLoginTimeout = setTimeout(() => {
-                this.failedLoginTimeout = undefined
-                this.setState({ failedLogin: false })
+            this.setState({ failed: true })
+            this.failedTimeout = setTimeout(() => {
+                this.failedTimeout = undefined
+                this.setState({ failed: false })
+                this.setState({ usedUsername: false })
             }, 2000)
         }
     }
 
     render() {
-        const { phase, failedLogin } = this.state
+        const { phase, failed, signup, usedUsername } = this.state
 
         const getLoginInfo = (userName: string, password: string) => {
             this.send({
@@ -75,11 +80,26 @@ export default class App extends React.Component {
             })
         }
 
+        const getSignupInfo = (userName: string, password: string) => {
+            this.send({
+                type: "signup",
+                userName,
+                password,
+            })
+        }
+
+        const goSignup = (event: React.MouseEvent<HTMLAnchorElement>) => {
+            event.preventDefault()
+            this.setState({ signup: true })
+        }
+
         return (
             phase === "login" ?
-                <LoginScreen getLoginInfo={getLoginInfo} failedLogin={failedLogin} /> :
+                (!signup ?
+                    <LoginScreen getLoginInfo={getLoginInfo} failedLogin={failed} goSignup={goSignup} /> :
+                    <SignupScreen getSignupInfo={getSignupInfo} failedSignup={failed} usedUsername={usedUsername} />) :
                 phase === "connected" ?
-                <ChatScreen ref={this.chatScreenRef} onSendMessage={(data) => this.send(data)} /> :
+                    <ChatScreen ref={this.chatScreenRef} onSendMessage={(data) => this.send(data)} /> :
                     assertUnreachable()
         )
     }

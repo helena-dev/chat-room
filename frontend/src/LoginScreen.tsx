@@ -6,11 +6,12 @@ import { mdiLogin, mdiAccountEdit, mdiFormTextboxPassword } from '@mdi/js';
 export interface LoginScreenProps {
     getLoginInfo: (userName: string, password: string) => void
     failedLogin: boolean
+    goSignup: (event: React.MouseEvent<HTMLAnchorElement>) => void
 }
 
 export default class LoginScreen extends React.Component<LoginScreenProps> {
     render() {
-        const { getLoginInfo, failedLogin } = this.props
+        const { getLoginInfo, failedLogin, goSignup } = this.props
 
         const onLoginSubmit = (event: React.FormEvent<HTMLFormElement>) => {
             event.preventDefault()
@@ -39,10 +40,16 @@ export default class LoginScreen extends React.Component<LoginScreenProps> {
                         </div>
                         <button type="submit" className="loginButton">
                             <Icon path={mdiLogin} size={"1em"} />
-                            Login
+                            Log-in
                         </button>
                     </form>
-                    <div className="loginError" style={{visibility}}>
+                    <div className="signupRedirect">
+                        <span>Don't have an account? </span>
+                        <a className="signupRedirectButton" href="#" onClick={goSignup}>
+                            Sign-up
+                        </a>
+                    </div>
+                    <div className="loginError" style={{ visibility }}>
                         <span className="loginErrorMsg">
                             There was a problem with the Login.
                         </span>
