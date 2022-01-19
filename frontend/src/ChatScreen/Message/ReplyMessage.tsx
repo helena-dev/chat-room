@@ -1,5 +1,5 @@
 import React from "react"
-import { ReceivedMessage } from "../../messages"
+import { ReceivedMessage } from "../../../../messages"
 import "./ReplyMessage.css"
 
 export interface ReplyMessageProps {

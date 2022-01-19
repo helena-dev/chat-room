@@ -26,7 +26,7 @@
     flex: 1;
     overflow-y: scroll;
     background: rgb(13, 20, 24);
-    background-image: url(assets/bkg_image_squares_015_gray.png);
+    background-image: url(../assets/bkg_image_squares_015_gray.png);
     background-repeat: repeat;
     display: flex;
     padding-bottom: 12px;

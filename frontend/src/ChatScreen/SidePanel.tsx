@@ -1,5 +1,5 @@
 import React from "react"
-import { UserList } from "../../messages"
+import { UserList } from "../../../messages"
 import "./SidePanel.css"
 import UserCard from "./UserCard"
 

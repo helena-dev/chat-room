@@ -1,7 +1,7 @@
 import React from "react"
-import { Toast } from "../../messages"
+import { Toast } from "../../../../messages"
 import "./Toast.css"
-import { assertUnreachable } from "./utils"
+import { assertUnreachable } from "../../utils"
 
 export interface ToastProps {
     data: Toast

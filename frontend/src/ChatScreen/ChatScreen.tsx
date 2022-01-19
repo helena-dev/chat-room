@@ -1,20 +1,20 @@
 import React from "react"
-import { assertUnreachable, rgbToHex, hexToRgb } from "./utils"
+import { assertUnreachable, rgbToHex, hexToRgb } from "../utils"
 import Icon from "@mdi/react"
 import { mdiClose, mdiPaperclip, mdiSend } from "@mdi/js"
 import "./ChatScreen.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor } from "../../messages"
-import ToastComponent from "./Toast"
-import Message from "./Message"
-import ReplyMessageComponent from "./ReplyMessage"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor } from "../../../messages"
+import ToastComponent from "./Message/Toast"
+import Message from "./Message/Message"
+import ReplyMessageComponent from "./Message/ReplyMessage"
 import ScrollButton from "./ScrollButton"
 import BigImage from "./BigImage"
 import SidePanel from "./SidePanel"
-import AppMenu from "./AppMenu"
-import ColorPicker from "./ColorPicker"
-import NickField from "./NickField"
+import AppMenu from "./AppMenu/AppMenu"
+import ColorPicker from "./AppMenu/ColorPicker"
+import NickField from "./AppMenu/NickField"
 import EditField from "./EditField"
-import MessageMenu from "./MessageMenu"
+import MessageMenu from "./Message/MessageMenu"
 
 interface ChatScreenState {
     currentNick?: string,
@@ -65,7 +65,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     nickInputRef = React.createRef<HTMLInputElement>()
 
     componentDidMount() {
-        this.bell = new Audio("assets/bell.oga")
+        this.bell = new Audio("../assets/bell.oga")
         this.bell.addEventListener("canplaythrough", event => {
             this.bellReady = true;
         })

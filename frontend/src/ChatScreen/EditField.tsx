@@ -1,8 +1,8 @@
 import { mdiClose, mdiPencil } from "@mdi/js"
 import Icon from "@mdi/react"
 import React from "react"
-import { ReceivedMessage } from "../../messages"
-import ReplyMessageComponent from "./ReplyMessage"
+import { ReceivedMessage } from "../../../messages"
+import ReplyMessageComponent from "./Message/ReplyMessage"
 import "./EditField.css"
 
 export interface EditFieldProps {

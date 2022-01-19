@@ -1,9 +1,9 @@
 import React, { ReactNode } from "react"
-import { formatDate } from "./utils"
-import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "./geo"
+import { formatDate } from "../utils"
+import { exceptionalReservationsToISO, isoAlpha2ToSymbols } from "../geo"
 import Icon from "@mdi/react"
 import { mdiHome } from "@mdi/js"
-import { UserInfo } from "../../messages"
+import { UserInfo } from "../../../messages"
 import "./UserCard.css"
 
 export interface UserCardProps {

@@ -1,7 +1,7 @@
 import React from "react"
 import Icon from "@mdi/react"
 import { mdiReply, mdiDelete, mdiPencil } from "@mdi/js"
-import { ReceivedMessage } from "../../messages"
+import { ReceivedMessage } from "../../../../messages"
 import "./MessageMenu.css"
 
 interface MenuData {

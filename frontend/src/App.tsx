@@ -1,9 +1,9 @@
 import React from "react"
 import { BackMessage, FrontMessage, LoginResponse, SignupResponse } from "../../messages"
 import "./App.css"
-import ChatScreen from "./ChatScreen"
-import LoginScreen from "./LoginScreen"
-import SignupScreen from "./SignupScreen"
+import ChatScreen from "./ChatScreen/ChatScreen"
+import LoginScreen from "./Login_Signup/LoginScreen"
+import SignupScreen from "./Login_Signup/SignupScreen"
 import { assertUnreachable } from "./utils"
 
 export interface AppState {

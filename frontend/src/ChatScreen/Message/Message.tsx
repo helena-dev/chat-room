@@ -2,10 +2,10 @@ import { mdiChevronDown, mdiProgressClock, mdiCheck } from "@mdi/js"
 import Icon from "@mdi/react"
 import React from "react"
 import Markdown from 'markdown-to-jsx'
-import { ReceivedMessage } from "../../messages"
+import { ReceivedMessage } from "../../../../messages"
 import "./Message.css"
 import ReplyMessageComponent from "./ReplyMessage"
-import { formatDate } from "./utils"
+import { formatDate } from "../../utils"
 
 export interface MessageProps {
     data: ReceivedMessage;
