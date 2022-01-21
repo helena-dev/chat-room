@@ -69,7 +69,7 @@ server.on("connection", (con, request) => {
         const connectionIpInfo = await ipinfoPromise
         send({
             type: "signup",
-            ok: true,
+            ok: !code,
             err: code,
         })
         if (code === 0 && !completed) {
@@ -93,7 +93,7 @@ server.on("connection", (con, request) => {
 })
 
 async function checkCredentials(userName: string, password: string) {
-    const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name = ? LIMIT 1;", [userName])
+    const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [userName.toLowerCase()])
     if (rows.length === 0) return false
     const sqlPassword = rows[0].password
     return password === sqlPassword
@@ -101,7 +101,7 @@ async function checkCredentials(userName: string, password: string) {
 
 async function addCredentials(userName: string, password: string) {
     try {
-        await mysqlCon.execute("INSERT INTO users (user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?);", [userName, 857112, password, new Date()])
+        await mysqlCon.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, password, new Date()])
         return 0
     } catch (err) {
         return (err as any).errno
@@ -145,7 +145,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
         if (text in users) return
         const oldName = currentCon
         try {
-            await mysqlCon.execute("UPDATE users SET user_name = ? WHERE user_name = ?;", [text, oldName])
+            await mysqlCon.execute("UPDATE users SET user_name_lowercase = ?, user_name = ? WHERE user_name_lowercase = ?;", [text.toLowerCase(), text, oldName.toLowerCase()])
             users[text] = connectionData
             delete users[oldName]
             currentCon = text
@@ -206,7 +206,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
         }
     }
 
-    mysqlCon.execute<any[]>("SELECT bkg_color FROM users WHERE user_name = ?", [currentCon])
+    mysqlCon.execute<any[]>("SELECT bkg_color FROM users WHERE user_name_lowercase = ?", [currentCon.toLowerCase()])
         .then(([rows, fields]) => {
             connectionData.send({
                 type: "bkgColor",
@@ -256,7 +256,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
             if (!data.online) {
                 const date = new Date()
                 connectionData.lastActivity = date
-                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name = ?;", [date, currentCon])
+                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name_lowercase = ?;", [date, currentCon.toLowerCase()])
                     .catch(() => console.log("efe"))
             }
             sendUserList()
@@ -284,7 +284,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
                 })
             }
         } else if (data.type === "bkgColor") {
-            mysqlCon.execute("UPDATE users SET bkg_color = ? WHERE user_name = ?;", [data.color, currentCon])
+            mysqlCon.execute("UPDATE users SET bkg_color = ? WHERE user_name_lowercase = ?;", [data.color, currentCon.toLowerCase()])
                 .catch(() => console.log("efe"))
         } else {
             throw Error("owo")
@@ -305,7 +305,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
     con.on("close", () => {
         console.log(`User ${currentCon} has left. :(`)
         if (users[currentCon].online) {
-            mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name = ?;", [new Date(), currentCon])
+            mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name_lowercase = ?;", [new Date(), currentCon.toLowerCase()])
                 .catch(() => console.log("efe"))
         }
         delete users[currentCon]
