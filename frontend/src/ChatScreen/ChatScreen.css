@@ -23,6 +23,7 @@
 }
 
 .textField {
+    position: relative;
     flex: 1;
     overflow-y: scroll;
     background: rgb(13, 20, 24);

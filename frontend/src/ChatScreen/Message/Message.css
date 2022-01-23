@@ -1,12 +1,30 @@
+.messageContainer {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    background-color: transparent;
+    margin-top: 12px;
+    border-radius: 7.5px 0 0 7.5px ;
+    transition: background-color 0.5s;
+}
+
+.messageContainer.followup {
+    margin-top: 3px;
+}
+
+.messageContainer.own {
+    border-radius: 0 7.5px 7.5px 0 ;
+}
+
 .message {
     padding: 4px 8px 4px 8px;
     background-color: rgb(38, 45, 49);
-    margin: 12px 10px 0px;
     border-radius: 7.5px;
     max-width: 75%;
     overflow-wrap: anywhere;
     hyphens: auto;
     position: relative;
+    align-self: flex-start;
 }
 
 .message.own {
@@ -91,10 +109,6 @@
 .message-check {
     display: inline-flex;
     justify-content: center;
-}
-
-.message.followup {
-    margin-top: 3px;
 }
 
 .message-body::-webkit-scrollbar {

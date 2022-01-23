@@ -359,7 +359,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             const bottom = window.innerHeight - msgButtonBottom
             const height = data.own ? 110 : 46 /* FIXME hardcoded message menu height*/
             const textField = this.textFieldRef.current!
-            let top = element.offsetTop + msgButtonHeight - textField.scrollTop
+            let top = element.offsetTop + msgButtonHeight - textField.scrollTop + 66 /*FIXME hardcoded topBar height */
             if (bottom < height) {
                 top -= height + msgButtonHeight
             }
@@ -382,6 +382,20 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             this.setState({ bigImage: undefined })
         }
 
+        const replyClick = (msgNum: number) => {
+            const msg = document.getElementById(`${msgNum}`)!
+            const container = msg.parentElement!
+            const color = "rgba(5, 97, 98, 0.5)"
+            container.style.backgroundColor = color
+            setTimeout(() => { container.style.backgroundColor = "transparent" }, 1000)
+            const textField = this.textFieldRef.current!
+            const top = msg.offsetTop
+            const margin = 10
+            const scroll = top - margin
+            textField.scrollTop = scroll
+
+        }
+
         const renderMsg = (data: ReceivedMessage, i: number) => {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
                 msg.type === "message" && data.from === msg.from
@@ -396,6 +410,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                 windowWidth={windowWidth}
                 onAction={() => onMessageImageAction(data.image)}
                 showButton={menuData?.message.msgNum === data.msgNum}
+                replyClick={replyClick}
             />
         }
 
