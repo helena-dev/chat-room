@@ -13,7 +13,6 @@
     background: rgb(42, 47, 50);
     color: rgba(241, 241, 242, 0.9);
     line-height: 1.4;
-    z-index: 0;
 }
 
 .app, .messageMenuBkg {

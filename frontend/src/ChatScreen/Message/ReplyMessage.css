@@ -40,6 +40,10 @@
     color: rgba(241, 241, 242, 0.63);
 }
 
+.reply-text a {
+    color: DeepSkyBlue
+}
+
 .closeReplyButton {
     font-size: 25px;
     cursor: pointer;

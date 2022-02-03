@@ -13,7 +13,7 @@ export function assertUnreachable(): never {
 }
 
 export function rgbToHex([r, g, b]: number[]): number {
-    const hex = r << 16 | g << 8 | b
+    const hex = (r << 16) | (g << 8) | b
     return hex
 }
 

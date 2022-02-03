@@ -83,6 +83,10 @@
     border-width: 0px 0px 3px;
 }
 
+.message-text a {
+    color: DeepSkyBlue
+}
+
 .message.own .message-text {
     border-width: 3px 0px;
 }

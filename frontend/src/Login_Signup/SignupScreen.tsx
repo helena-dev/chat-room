@@ -24,7 +24,7 @@ export default class SignupScreen extends React.Component<SignupScreenProps> {
         }
     }
     render() {
-        const { getSignupInfo: getSignupInfo, failedSignup, usedUsername } = this.props
+        const { getSignupInfo, failedSignup, usedUsername } = this.props
         const { diffPassword } = this.state
 
         const onSignupSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -54,19 +54,19 @@ export default class SignupScreen extends React.Component<SignupScreenProps> {
                         <div className="loginInputContainer">
                             <label className="loginInputLabel">
                                 <Icon path={mdiAccountEdit} size={"1em"} />
-                                <input className="loginInput" type="text" name="userName" required maxLength={20} placeholder="Username" />
+                                <input className="loginInput" type="text" name="userName" required maxLength={20} placeholder="Username" autoComplete="off"/>
                             </label>
                         </div>
                         <div className="loginInputContainer">
                             <label className="loginInputLabel">
                                 <Icon path={mdiFormTextboxPassword} size={"1em"} />
-                                <input className="loginInput" type="password" name="password" required maxLength={64} placeholder="Password" />
+                                <input className="loginInput" type="password" name="password" required maxLength={64} placeholder="Password" autoComplete="new-password"/>
                             </label>
                         </div>
                         <div className="loginInputContainer">
                             <label className="loginInputLabel">
                                 <Icon path={mdiFormTextboxPassword} size={"1em"} />
-                                <input className="loginInput" type="password" name="repPassword" required maxLength={64} placeholder="Repeat password" />
+                                <input className="loginInput" type="password" name="repPassword" required maxLength={64} placeholder="Repeat password" autoComplete="new-password"/>
                             </label>
                         </div>
                         <button type="submit" className="loginButton">
