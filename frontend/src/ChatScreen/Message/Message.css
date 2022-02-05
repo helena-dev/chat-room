@@ -1,4 +1,6 @@
 .messageContainer {
+    box-sizing: border-box;
+    background-clip: border-box;
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -6,6 +8,7 @@
     margin-top: 12px;
     border-radius: 7.5px 0 0 7.5px ;
     transition: background-color 0.5s;
+    padding: 0 0 0 10px;
 }
 
 .messageContainer.followup {
@@ -13,7 +16,8 @@
 }
 
 .messageContainer.own {
-    border-radius: 0 7.5px 7.5px 0 ;
+    border-radius: 0 7.5px 7.5px 0;
+    padding: 0 10px 0 0;
 }
 
 .message {
