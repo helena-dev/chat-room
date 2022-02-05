@@ -4,6 +4,10 @@ import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
 import type { BackMessage, FrontMessage, LoginRequest, SignupRequest } from "./messages"
 import { Connection, createConnection } from 'mysql2/promise'
 import { createServer } from "http"
+import got from "got"
+
+const { RECAPTCHA_PRIVATEKEY } = process.env
+if(!RECAPTCHA_PRIVATEKEY) throw "Recaptcha private key needed.\r\n"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -65,6 +69,23 @@ server.on("connection", (con, request) => {
         }
     }
     const handleSignup = async (data: SignupRequest) => {
+        const params = {
+            secret: RECAPTCHA_PRIVATEKEY,
+            response: data.captchaResponse,
+            remoteip: normedIP,
+        }
+        const captchaVerifyResponse: any = await got.post("https://www.google.com/recaptcha/api/siteverify", {
+            form: params
+        }).json()
+        if(!captchaVerifyResponse.success) {
+            send({
+                type: "signup",
+                ok: false,
+                err: -3,
+            })
+            return
+        }
+
         const code = await addCredentials(data.userName, data.password)
         const connectionIpInfo = await ipinfoPromise
         send({

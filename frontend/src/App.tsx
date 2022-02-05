@@ -11,6 +11,7 @@ export interface AppState {
     failed: boolean
     signup: boolean
     usedUsername: boolean
+    failedCaptcha: boolean
 }
 
 export default class App extends React.Component {
@@ -18,7 +19,7 @@ export default class App extends React.Component {
     chatScreenRef = React.createRef<ChatScreen>()
     failedTimeout: any
 
-    state: AppState = { phase: "login", failed: false, signup: false, usedUsername: false }
+    state: AppState = { phase: "login", failed: false, signup: false, usedUsername: false, failedCaptcha: false }
 
     componentDidMount() {
         this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
@@ -56,21 +57,24 @@ export default class App extends React.Component {
             this.cancelTimeout()
             this.setState({ phase: "connected" })
         } else if (!data.ok) {
-            if (data.type === "signup" && data.err === 1062) {
-                this.setState({ usedUsername: true })
+            if (data.type === "signup") {
+                if (data.err === 1062) {
+                    this.setState({ usedUsername: true })
+                } else if (data.err === -3) {
+                    this.setState({ failedCaptcha: true })
+                }
             }
             this.cancelTimeout()
             this.setState({ failed: true })
             this.failedTimeout = setTimeout(() => {
                 this.failedTimeout = undefined
-                this.setState({ failed: false })
-                this.setState({ usedUsername: false })
+                this.setState({ failed: false, usedUsername: false, failedCaptcha: false})
             }, 2000)
         }
     }
 
     render() {
-        const { phase, failed, signup, usedUsername } = this.state
+        const { phase, failed, signup, usedUsername, failedCaptcha } = this.state
 
         const getLoginInfo = (userName: string, password: string) => {
             this.send({
@@ -80,11 +84,12 @@ export default class App extends React.Component {
             })
         }
 
-        const getSignupInfo = (userName: string, password: string) => {
+        const getSignupInfo = (userName: string, password: string, captchaResponse: string) => {
             this.send({
                 type: "signup",
                 userName,
                 password,
+                captchaResponse,
             })
         }
 
@@ -97,7 +102,7 @@ export default class App extends React.Component {
             phase === "login" ?
                 (!signup ?
                     <LoginScreen getLoginInfo={getLoginInfo} failedLogin={failed} goSignup={goSignup} /> :
-                    <SignupScreen getSignupInfo={getSignupInfo} failedSignup={failed} usedUsername={usedUsername} />) :
+                    <SignupScreen getSignupInfo={getSignupInfo} failedSignup={failed} usedUsername={usedUsername} failedCaptcha={failedCaptcha} />) :
                 phase === "connected" ?
                     <ChatScreen ref={this.chatScreenRef} onSendMessage={(data) => this.send(data)} /> :
                     assertUnreachable()

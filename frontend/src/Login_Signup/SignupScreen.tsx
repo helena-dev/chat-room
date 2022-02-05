@@ -2,20 +2,23 @@ import React from "react"
 import "./SignupScreen.css"
 import Icon from "@mdi/react"
 import { mdiLogin, mdiAccountEdit, mdiFormTextboxPassword } from '@mdi/js';
+import Recaptcha from "../vendor/Recaptcha";
 
 interface SignupScreenState {
     diffPassword: boolean
 }
 
 export interface SignupScreenProps {
-    getSignupInfo: (userName: string, password: string) => void
+    getSignupInfo: (userName: string, password: string, captchaResponse: string) => void
     failedSignup: boolean
     usedUsername: boolean
+    failedCaptcha: boolean
 }
 
 export default class SignupScreen extends React.Component<SignupScreenProps> {
     state: SignupScreenState = { diffPassword: false }
     diffPassTimeot: any
+    recaptchaRef = React.createRef<Recaptcha>()
 
     cancelTimeout() {
         if (this.diffPassTimeot) {
@@ -24,7 +27,7 @@ export default class SignupScreen extends React.Component<SignupScreenProps> {
         }
     }
     render() {
-        const { getSignupInfo, failedSignup, usedUsername } = this.props
+        const { getSignupInfo, failedSignup, usedUsername, failedCaptcha } = this.props
         const { diffPassword } = this.state
 
         const onSignupSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -33,8 +36,10 @@ export default class SignupScreen extends React.Component<SignupScreenProps> {
             const userName = data.get("userName") as string
             const password = data.get("password") as string
             const repPassword = data.get("repPassword") as string
+            const captchaResponse = data.get("g-recaptcha-response") as string
             if (password === repPassword) {
-                getSignupInfo(userName, password)
+                getSignupInfo(userName, password, captchaResponse)
+                this.recaptchaRef.current?.reset()
             } else {
                 this.cancelTimeout()
                 this.setState({ diffPassword: true })
@@ -45,7 +50,7 @@ export default class SignupScreen extends React.Component<SignupScreenProps> {
             }
 
         }
-        const visibility = failedSignup || diffPassword || usedUsername ? "visible" : "hidden"
+        const visibility = failedSignup || diffPassword || usedUsername || failedCaptcha ? "visible" : "hidden"
         return (
             <div className="loginBiggestContainer">
                 <div className="loginContainer">
@@ -69,6 +74,9 @@ export default class SignupScreen extends React.Component<SignupScreenProps> {
                                 <input className="loginInput" type="password" name="repPassword" required maxLength={64} placeholder="Repeat password" autoComplete="new-password"/>
                             </label>
                         </div>
+                        <div className="recaptchaContainer">
+                            <Recaptcha ref={this.recaptchaRef} theme="dark" />
+                        </div>
                         <button type="submit" className="loginButton">
                             <Icon path={mdiLogin} size={"1em"} />
                             Sign-up
@@ -77,15 +85,19 @@ export default class SignupScreen extends React.Component<SignupScreenProps> {
                     <div className="loginError" style={{ visibility }}>
                         {diffPassword ?
                             <span className="loginErrorMsg">
-                                The passwords do not match.
+                                The passwords do not match
                             </span> :
                             usedUsername ?
                                 <span className="loginErrorMsg">
-                                    That user name is already taken.
+                                    That user name is already taken
                                 </span> :
-                                <span className="loginErrorMsg">
-                                    There was a problem with the Sign-up.
-                                </span>}
+                                failedCaptcha ?
+                                    <span className="loginErrorMsg">
+                                        Invalid Captcha
+                                    </span> :
+                                    <span className="loginErrorMsg">
+                                        There was a problem with the Sign-up
+                                    </span>}
                     </div>
                 </div>
             </div>

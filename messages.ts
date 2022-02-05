@@ -141,6 +141,7 @@ export interface SignupRequest {
     type: "signup";
     userName: string;
     password: string;
+    captchaResponse: string;
 }
 
 export interface SignupResponse {
