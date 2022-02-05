@@ -1,4 +1,4 @@
-import EventEmitter = require("events")
+import EventEmitter from "events"
 
 function randomInt(start: number, end: number): number {
     return Math.floor(Math.random() * (end + 1 - start) + start)
@@ -86,16 +86,16 @@ function decodeDataURL(url: string): [string, Buffer] | undefined {
     if (match) return [match[1], Buffer.from(match[2], 'base64')]
 }
 
-    export {
-        randomInt,
-        filterEscapeCode,
-        LineSplitter,
-        normalizeIP,
-        CSI,
-        SGR,
-        unbreakLines,
-        wrapText,
-        getMagicColorSequence,
-        encodeDataURL,
-        decodeDataURL,
-    }
+export {
+    randomInt,
+    filterEscapeCode,
+    LineSplitter,
+    normalizeIP,
+    CSI,
+    SGR,
+    unbreakLines,
+    wrapText,
+    getMagicColorSequence,
+    encodeDataURL,
+    decodeDataURL,
+}

@@ -13,5 +13,6 @@
     "build": "tsc",
     "prestart": "npm run build",
     "start": "node dist/main"
-  }
+  },
+  "type": "module"
 }
