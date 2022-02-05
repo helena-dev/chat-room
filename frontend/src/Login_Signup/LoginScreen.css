@@ -30,10 +30,11 @@
     padding: 30px;
     border-radius: 7.5px;
     background: rgb(30 36 40);
+    width: 180px;
 }
 
 .loginInputLabel {
-    display: inline-flex;
+    display: flex;
     align-content: space-between;
     gap: 10px;
     align-items: center;
@@ -52,7 +53,7 @@
     color: inherit;
     outline: none;
     border-radius: 7.5px;
-    width: 135px;
+    flex: 1;
 }
 
 .loginSpan {

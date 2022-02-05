@@ -29,13 +29,13 @@ export default class LoginScreen extends React.Component<LoginScreenProps> {
                         <div className="loginInputContainer">
                             <label className="loginInputLabel">
                                 <Icon path={mdiAccountEdit} size={"1em"} />
-                                <input className="loginInput" type="text" name="userName" required maxLength={20} placeholder="Username" />
+                                <input className="loginInput" type="text" name="userName" required maxLength={20} placeholder="Username" size={1}/>
                             </label>
                         </div>
                         <div className="loginInputContainer">
                             <label className="loginInputLabel">
                                 <Icon path={mdiFormTextboxPassword} size={"1em"} />
-                                <input className="loginInput" type="password" name="password" required maxLength={64} placeholder="Password" />
+                                <input className="loginInput" type="password" name="password" required maxLength={64} placeholder="Password" size={1}/>
                             </label>
                         </div>
                         <button type="submit" className="loginButton">
