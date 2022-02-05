@@ -121,6 +121,7 @@ async function checkCredentials(userName: string, password: string) {
 }
 
 async function addCredentials(userName: string, password: string) {
+    if(!userName || !password) return -2
     try {
         await mysqlCon.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, password, new Date()])
         return 0
