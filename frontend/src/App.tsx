@@ -22,13 +22,17 @@ export default class App extends React.Component {
     state: AppState = { phase: "login", failed: false, signup: false, usedUsername: false, failedCaptcha: false }
 
     componentDidMount() {
-        this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
-        this.con.onmessage = (event) => this.receive(event)
+        this.newCon()
     }
 
     componentWillUnmount() {
         this.con?.close()
         this.cancelTimeout()
+    }
+
+    newCon() {
+        this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
+        this.con.onmessage = (event) => this.receive(event)
     }
 
     cancelTimeout() {
@@ -98,13 +102,19 @@ export default class App extends React.Component {
             this.setState({ signup: true })
         }
 
+        const logout = () => {
+            this.con!.close()
+            this.setState({ phase: "login" })
+            this.newCon()
+        }
+
         return (
             phase === "login" ?
                 (!signup ?
                     <LoginScreen getLoginInfo={getLoginInfo} failedLogin={failed} goSignup={goSignup} /> :
                     <SignupScreen getSignupInfo={getSignupInfo} failedSignup={failed} usedUsername={usedUsername} failedCaptcha={failedCaptcha} />) :
                 phase === "connected" ?
-                    <ChatScreen ref={this.chatScreenRef} onSendMessage={(data) => this.send(data)} /> :
+                    <ChatScreen ref={this.chatScreenRef} onSendMessage={(data) => this.send(data)} logout={logout}/> :
                     assertUnreachable()
         )
     }

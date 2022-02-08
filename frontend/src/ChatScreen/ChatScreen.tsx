@@ -15,6 +15,7 @@ import ColorPicker from "./AppMenu/ColorPicker"
 import NickField from "./AppMenu/NickField"
 import EditField from "./EditField"
 import MessageMenu from "./Message/MessageMenu"
+import Logout from "./AppMenu/Logout"
 
 interface ChatScreenState {
     currentNick?: string,
@@ -36,6 +37,7 @@ interface ChatScreenState {
 
 export interface ChatScreenProps {
     onSendMessage: (data: FrontMessage) => void
+    logout: () => void
 }
 
 interface MenuData {
@@ -603,6 +605,10 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             event.preventDefault()
         }
 
+        const onLogoutClick = () => {
+            this.props.logout()
+        }
+
         const topBar = (
             <div className="topBar">
                 <div className="topBarLeft" onClick={onTopBarLeftClick}>
@@ -613,6 +619,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                     <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} >
                         <NickField currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef} />
                         <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />
+                        <Logout onLogoutClick={onLogoutClick} />
                     </AppMenu>
                 </div>
             </div>
