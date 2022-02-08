@@ -20,6 +20,18 @@
     max-height: 75%;
 }
 
+.settingsToast {
+    position: absolute;
+    color: rgba(241, 241, 242, 0.9);
+    background-color: rgb(5, 97, 98);
+    border-radius: 7.5px;
+    box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
+    text-align: center;
+    padding: 5px 12px 6px;
+    align-self: center;
+    margin-top: 20px;
+    transition: opacity 0.25s;
+}
 
 .settingsTopBar {
     background-color: rgb(42, 47, 50);

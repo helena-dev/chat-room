@@ -3,7 +3,7 @@ import { assertUnreachable, rgbToHex, hexToRgb } from "../utils"
 import Icon from "@mdi/react"
 import { mdiClose, mdiPaperclip, mdiSend } from "@mdi/js"
 import "./ChatScreen.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor } from "../../../messages"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor, UpdatePassword } from "../../../messages"
 import ToastComponent from "./Message/Toast"
 import Message from "./Message/Message"
 import ReplyMessageComponent from "./Message/ReplyMessage"
@@ -34,6 +34,8 @@ interface ChatScreenState {
     showAppMenu: boolean,
     currentColor: [number, number, number],
     settingsMenu: boolean,
+    changedPwd: boolean,
+    wrongPwd: boolean,
 }
 
 export interface ChatScreenProps {
@@ -60,8 +62,10 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     resizeObserver!: ResizeObserver
     pseudoId: number = -1
     allMessages: (ReceivedMessage | Toast)[] = []
+    wrongPwdTimeout: any
+    changedPwdTimeout: any
 
-    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false}
+    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false, changedPwd: false, wrongPwd: false }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -135,6 +139,8 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             this.receiveEditMessage(data)
         } else if (data.type === "bkgColor") {
             this.receiveBkgColor(data)
+        } else if (data.type === "password") {
+            this.receivePwd(data)
         } else {
             assertUnreachable()
         }
@@ -239,6 +245,31 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         this.setState({ currentColor: hexToRgb(data.color) })
     }
 
+    cancelTimeout(timeout: any) {
+        if (timeout) {
+            clearTimeout(timeout)
+            timeout = undefined
+        }
+    }
+
+    receivePwd(data: UpdatePassword) {
+        if(data.ok) {
+            this.cancelTimeout(this.changedPwdTimeout)
+            this.setState({ changedPwd: true })
+            this.changedPwdTimeout = setTimeout(() => {
+                this.changedPwdTimeout = undefined
+                this.setState({ changedPwd: false })
+            }, 2000)
+        } else {
+            this.cancelTimeout(this.wrongPwdTimeout)
+            this.setState({ wrongPwd: true })
+            this.wrongPwdTimeout = setTimeout(() => {
+                this.wrongPwdTimeout = undefined
+                this.setState({ wrongPwd: false })
+            }, 2000)
+        }
+    }
+
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
@@ -302,7 +333,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu} = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu, changedPwd, wrongPwd } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -634,11 +665,19 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             </div>
         )
 
+        const changePassword = (oldPassword: string, password: string) => {
+            this.send({
+                type: "password",
+                oldPwd: oldPassword,
+                newPwd: password,
+            })
+        }
+
         return (
             <div className="container">
                 {settingsMenu ? <SettingsMenu settingsDisappear={settingsDisappear}
                     currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef}
-                    onColorSubmit={onColorSubmit} currentColor={currentColor}/> : undefined}
+                    onColorSubmit={onColorSubmit} currentColor={currentColor} changePassword={changePassword} changedPwd={changedPwd} wrongPwd={wrongPwd}/> : undefined}
                 {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage} /> : undefined}
                 {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers} /> : undefined}
                 <div className="app" onClick={disappearAppMenu}>

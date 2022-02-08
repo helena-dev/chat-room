@@ -8,7 +8,8 @@ export type BackMessage =
     EditMessage |
     LoginResponse |
     SignupResponse |
-    UpdateBkgColor
+    UpdateBkgColor |
+    UpdatePassword
 
 export type FrontMessage =
     SentMessage |
@@ -19,7 +20,8 @@ export type FrontMessage =
     EditMessage |
     LoginRequest |
     SignupRequest |
-    UpdateBkgColor
+    UpdateBkgColor |
+    PasswordChange
 
 export interface UserList {
     type: "userList";
@@ -153,4 +155,15 @@ export interface SignupResponse {
 export interface UpdateBkgColor {
     type: "bkgColor";
     color: number;
+}
+
+export interface PasswordChange {
+    type: "password";
+    oldPwd: string;
+    newPwd: string;
+}
+
+export interface UpdatePassword {
+    type: "password";
+    ok: boolean;
 }

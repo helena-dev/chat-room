@@ -308,10 +308,29 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
         } else if (data.type === "bkgColor") {
             mysqlCon.execute("UPDATE users SET bkg_color = ? WHERE user_name_lowercase = ?;", [data.color, currentCon.toLowerCase()])
                 .catch(() => console.log("efe"))
+        } else if (data.type === "password") {
+            changePassword(data.oldPwd, data.newPwd)
         } else {
             throw Error("owo")
         }
     })
+
+    async function changePassword(oldPwd: string, newPwd: string) {
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [currentCon.toLowerCase()])
+        const sqlPassword = rows[0].password
+        if(sqlPassword === oldPwd) {
+            mysqlCon.execute("UPDATE users SET password = ? WHERE user_name_lowercase = ?;", [newPwd, currentCon.toLowerCase()])
+            connectionData.send({
+                type: "password",
+                ok: true
+            })
+        } else {
+            connectionData.send ({
+                type: "password",
+                ok: false,
+            })
+        }
+    }
 
     function punish() {
         const id = generateMsgId()
