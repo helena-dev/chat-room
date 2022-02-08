@@ -6,7 +6,6 @@
     flex-direction: column;
     background-color: transparent;
     margin-top: 12px;
-    border-radius: 7.5px 0 0 7.5px ;
     transition: background-color 0.5s;
     padding: 0 0 0 10px;
 }
@@ -16,7 +15,6 @@
 }
 
 .messageContainer.own {
-    border-radius: 0 7.5px 7.5px 0;
     padding: 0 10px 0 0;
 }
 
