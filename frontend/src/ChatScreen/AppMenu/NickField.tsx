@@ -11,14 +11,17 @@ export interface NickFieldProps {
 
 export default class NickField extends React.Component<NickFieldProps> {
     render() {
-        const { onNickSubmit, currentNick, reference} = this.props
+        const { onNickSubmit, currentNick, reference } = this.props
         return (
-            <form className="nickField" autoComplete="off" onSubmit={onNickSubmit}>
-                <input ref={reference} type="text" className="nickInput" placeholder={currentNick || "Write your nick"} maxLength={20} />
-                <button className="nickButton" type="submit">
-                    <Icon path={mdiAccountEdit} size={"1em"} />
-                </button>
-            </form>
+            <div className="nickContainer">
+            <h3 className="nickTitle">Username</h3>
+                <form className="nickField" autoComplete="off" onSubmit={onNickSubmit}>
+                    <input ref={reference} type="text" className="nickInput" placeholder={currentNick || "Write your nick"} maxLength={20} />
+                    <button className="nickButton" type="submit">
+                        <Icon path={mdiAccountEdit} size={"1em"} />
+                    </button>
+                </form>
+            </div>
         )
     }
 }

@@ -1,13 +1,31 @@
-.colorField {
+.colorContainer {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+}
+
+.colorTitle {
+    margin: 0;
+    width: fit-content;
+}
+
+.colorPreview {
+    border-radius: 7.5px;
+    width: 25px;
+    height: 25px;
+    align-self: center;
+}
+
+.colorField {
+    flex: none;
+    display: flex;
+    padding: 15px 0;
+    gap: 10px;
 }
 
 .colorInputContainer {
     display: flex;
     justify-content: space-between;
-    flex: 1;
-    width: 149px;
+    gap: 10px;
 }
 
 .colorInput {

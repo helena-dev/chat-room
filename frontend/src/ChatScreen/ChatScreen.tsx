@@ -11,11 +11,11 @@ import ScrollButton from "./ScrollButton"
 import BigImage from "./BigImage"
 import SidePanel from "./SidePanel"
 import AppMenu from "./AppMenu/AppMenu"
-import ColorPicker from "./AppMenu/ColorPicker"
-import NickField from "./AppMenu/NickField"
 import EditField from "./EditField"
 import MessageMenu from "./Message/MessageMenu"
+import Settings from "./AppMenu/Settings"
 import Logout from "./AppMenu/Logout"
+import SettingsMenu from "./AppMenu/SettingsMenu"
 
 interface ChatScreenState {
     currentNick?: string,
@@ -33,6 +33,7 @@ interface ChatScreenState {
     bigImage?: string,
     showAppMenu: boolean,
     currentColor: [number, number, number],
+    settingsMenu: boolean,
 }
 
 export interface ChatScreenProps {
@@ -60,7 +61,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     pseudoId: number = -1
     allMessages: (ReceivedMessage | Toast)[] = []
 
-    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24] }
+    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false}
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -301,7 +302,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu} = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -382,6 +383,10 @@ class ChatScreen extends React.Component<ChatScreenProps> {
 
         const disappearBigImage = () => {
             this.setState({ bigImage: undefined })
+        }
+
+        const settingsDisappear = () => {
+            this.setState({ settingsMenu: false })
         }
 
         const replyClick = (msgNum: number) => {
@@ -605,6 +610,11 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             event.preventDefault()
         }
 
+        const onSettingsClick = () => {
+            disappearAppMenu()
+            this.setState({ settingsMenu: true })
+        }
+
         const onLogoutClick = () => {
             this.props.logout()
         }
@@ -617,8 +627,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                 </div>
                 <div className="topBarRight">
                     <AppMenu AppMenuAction={openAppMenu} show={showAppMenu} >
-                        <NickField currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef} />
-                        <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />
+                        <Settings onSettingsClick={onSettingsClick} />
                         <Logout onLogoutClick={onLogoutClick} />
                     </AppMenu>
                 </div>
@@ -627,6 +636,9 @@ class ChatScreen extends React.Component<ChatScreenProps> {
 
         return (
             <div className="container">
+                {settingsMenu ? <SettingsMenu settingsDisappear={settingsDisappear}
+                    currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef}
+                    onColorSubmit={onColorSubmit} currentColor={currentColor}/> : undefined}
                 {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage} /> : undefined}
                 {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers} /> : undefined}
                 <div className="app" onClick={disappearAppMenu}>

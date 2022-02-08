@@ -1,0 +1,62 @@
+.settingsMenuBkg {
+    position: absolute;
+    background-color: rgba(42, 47, 50, 0.5);
+    z-index: 100;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.settingsContainer {
+    margin-top: 78px;
+    display: flex;
+    flex-direction: column;
+    width: 425px;
+    max-width: 75%;
+    color: rgba(241, 241, 242, 0.9);
+    height: fit-content;
+    max-height: 75%;
+}
+
+
+.settingsTopBar {
+    background-color: rgb(42, 47, 50);
+    border-top-left-radius:  7.5px;
+    border-top-right-radius:  7.5px;
+    padding: 15px 15px;
+}
+
+.settingsTitle {
+    margin: 0;
+}
+
+.settingsBody {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: rgb(5, 97, 98);
+    border-bottom-left-radius:  7.5px;
+    border-bottom-right-radius:  7.5px;
+    padding: 15px 15px;
+    overflow: auto;
+}
+
+.settingsBody button {
+    color: rgba(241, 241, 242, 0.65);
+}
+
+.settingsBody::-webkit-scrollbar {
+    width: 6px;
+    border-radius: 10px;
+}
+
+.settingsBody::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.25);
+}
+
+.settingsBody::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+}

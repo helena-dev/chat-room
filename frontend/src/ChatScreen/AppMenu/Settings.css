@@ -1,0 +1,31 @@
+.settings {
+    display: flex;
+}
+
+.settings:hover {
+    background-color: hsl(202, 9%, 25%);
+}
+
+.settingsButton {
+    background-color: transparent;
+    border: none;
+    display: flex;
+    font-size: 15px;
+    cursor: pointer;
+    flex: 1;
+    padding: 7.5px 10px;
+    gap: 7.5px
+}
+
+.settingsSpan {
+    flex: 1;
+    text-align: left;
+}
+
+.settingsIcon {
+    font-size: 20px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    justify-self: flex-end;
+}

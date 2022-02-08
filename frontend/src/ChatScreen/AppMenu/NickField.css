@@ -1,6 +1,17 @@
+.nickContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.nickTitle {
+    margin: 0;
+}
+
 .nickField {
     flex: none;
     display: flex;
+    padding: 15px 0;
+    gap: 10px;
 }
 
 .nickInput {
