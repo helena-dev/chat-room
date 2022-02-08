@@ -3,6 +3,7 @@ import "./SettingsMenu.css"
 import NickField from "./NickField";
 import ColorPicker from "./ColorPicker";
 import Password from "./Password";
+import DeleteAccount from "./DeleteAccount";
 
 export interface SettingsMenuProps {
     settingsDisappear: () => void
@@ -14,6 +15,9 @@ export interface SettingsMenuProps {
     changePassword: (arg0: string, arg1: string) => void
     changedPwd: boolean
     wrongPwd: boolean
+    onDeleteAccountSubmit: (event: React.FormEvent<HTMLFormElement>) => void
+    deleteConfirmation: boolean
+    deleteConfirmationHandler: (event: React.MouseEvent<HTMLButtonElement>) => void
 }
 
 export interface SettingsMenuState {
@@ -30,7 +34,7 @@ export default class SettingsMenu extends React.Component<SettingsMenuProps> {
         }
     }
     render() {
-        const { settingsDisappear, currentNick, onNickSubmit, reference, onColorSubmit, currentColor, changePassword, changedPwd, wrongPwd } = this.props
+        const { settingsDisappear, currentNick, onNickSubmit, reference, onColorSubmit, currentColor, changePassword, changedPwd, wrongPwd, onDeleteAccountSubmit, deleteConfirmation, deleteConfirmationHandler } = this.props
         const { diffPassword } = this.state
         const visibility = changedPwd || wrongPwd || diffPassword ? "visible" : "hidden"
         const opacity = changedPwd || wrongPwd || diffPassword ? 1 : 0
@@ -54,11 +58,12 @@ export default class SettingsMenu extends React.Component<SettingsMenuProps> {
                         <NickField currentNick={currentNick} onNickSubmit={onNickSubmit} reference={reference} />
                         <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />
                         <Password changePassword={changePassword} changedPwd={changedPwd} differentPasswords={diffentPasswords} />
+                        <DeleteAccount onDeleteAccountSubmit={onDeleteAccountSubmit} deleteConfirmation={deleteConfirmation} deleteConfirmationHandler={deleteConfirmationHandler}/>
                     </div>
                 </div>
                 <div className="settingsToast" style={{ visibility, opacity }}>
                     {wrongPwd ?
-                        <span>Wrong Old Password</span> :
+                        <span>Wrong Password</span> :
                         changedPwd ?
                             <span>Changed Password</span> :
                             diffPassword ?

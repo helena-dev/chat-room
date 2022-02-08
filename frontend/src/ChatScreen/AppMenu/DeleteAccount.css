@@ -1,0 +1,54 @@
+.deleteContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.deleteContainer svg {
+    font-size: 20px;
+}
+
+.deleteTitle {
+    margin: 0;
+}
+
+.deleteButton {
+    background-color: transparent;
+    border: none;
+    color: rgba(241, 241, 242, 0.65);
+    font-size: 15.5px;
+    cursor: pointer;
+    display: inline-flex;
+    gap: 5px;
+    align-items: center;
+}
+
+.deleteConfirmation {
+    font-size: 15px;
+}
+
+.deleteMsgDiv {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.deleteButtonDiv {
+    display: inline-flex;
+    gap: 10px;
+    padding: 5px 0;
+}
+
+.deleteConfirmationButton {
+    width: 3em;
+    height: 22px;
+    text-align: center;
+    cursor: pointer;
+    border: none;
+    border-radius: 7.5px;
+    background-color: hsl(240, 4%, 95%);
+    color: rgb(51, 56, 59);
+}
+
+.deleteReminder {
+    font-size: 13px;
+}

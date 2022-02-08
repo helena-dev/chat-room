@@ -9,7 +9,8 @@ export type BackMessage =
     LoginResponse |
     SignupResponse |
     UpdateBkgColor |
-    UpdatePassword
+    UpdatePassword |
+    DeleteConfirmation
 
 export type FrontMessage =
     SentMessage |
@@ -21,7 +22,9 @@ export type FrontMessage =
     LoginRequest |
     SignupRequest |
     UpdateBkgColor |
-    PasswordChange
+    PasswordChange |
+    DeleteAccount |
+    DeleteAccountYes
 
 export interface UserList {
     type: "userList";
@@ -166,4 +169,17 @@ export interface PasswordChange {
 export interface UpdatePassword {
     type: "password";
     ok: boolean;
+}
+
+export interface DeleteAccount {
+    type: "deleteAccount";
+    password: string;
+}
+
+export interface DeleteConfirmation {
+    type: "deleteConfirmation";
+}
+
+export interface DeleteAccountYes {
+    type: "deleteAccountYes"
 }

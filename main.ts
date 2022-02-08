@@ -310,6 +310,10 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
                 .catch(() => console.log("efe"))
         } else if (data.type === "password") {
             changePassword(data.oldPwd, data.newPwd)
+        } else if (data.type === "deleteAccount") {
+            deleteAccount(data.password)
+        } else if (data.type === "deleteAccountYes") {
+            mysqlCon.execute("DELETE FROM users WHERE user_name_lowercase = ?;", [currentCon.toLowerCase()])
         } else {
             throw Error("owo")
         }
@@ -323,6 +327,21 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
             connectionData.send({
                 type: "password",
                 ok: true
+            })
+        } else {
+            connectionData.send ({
+                type: "password",
+                ok: false,
+            })
+        }
+    }
+
+    async function deleteAccount(password: string) {
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [currentCon.toLowerCase()])
+        const sqlPassword = rows[0].password
+        if(sqlPassword === password) {
+            connectionData.send({
+                type: "deleteConfirmation",
             })
         } else {
             connectionData.send ({

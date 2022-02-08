@@ -36,6 +36,7 @@ interface ChatScreenState {
     settingsMenu: boolean,
     changedPwd: boolean,
     wrongPwd: boolean,
+    deleteConfirmation: boolean
 }
 
 export interface ChatScreenProps {
@@ -65,7 +66,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     wrongPwdTimeout: any
     changedPwdTimeout: any
 
-    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false, changedPwd: false, wrongPwd: false }
+    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false, changedPwd: false, wrongPwd: false, deleteConfirmation: false }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -141,6 +142,8 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             this.receiveBkgColor(data)
         } else if (data.type === "password") {
             this.receivePwd(data)
+        } else if (data.type === "deleteConfirmation") {
+            this.receiveDeleteConfirmation()
         } else {
             assertUnreachable()
         }
@@ -253,7 +256,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     }
 
     receivePwd(data: UpdatePassword) {
-        if(data.ok) {
+        if (data.ok) {
             this.cancelTimeout(this.changedPwdTimeout)
             this.setState({ changedPwd: true })
             this.changedPwdTimeout = setTimeout(() => {
@@ -268,6 +271,10 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                 this.setState({ wrongPwd: false })
             }, 2000)
         }
+    }
+
+    receiveDeleteConfirmation() {
+        this.setState({ deleteConfirmation: true })
     }
 
     sendMessage(): void {
@@ -333,7 +340,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu, changedPwd, wrongPwd } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu, changedPwd, wrongPwd, deleteConfirmation } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -673,11 +680,38 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             })
         }
 
+        const onDeleteAccountSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+            event.preventDefault()
+            const data = new FormData(event.currentTarget)
+            const password = data.get("deleteAccountPassword") as string
+            this.send({
+                type: "deleteAccount",
+                password,
+            })
+        }
+
+        const deleteConfirmationHandler = (event: React.MouseEvent<HTMLButtonElement>) => {
+            const answer = event.currentTarget.innerText
+            if (answer === "Yes") {
+                this.send({
+                    type: "deleteAccountYes"
+                })
+                this.props.logout()
+            } else if (answer === "No") {
+                this.setState({ deleteConfirmation: false })
+            } else {
+                assertUnreachable()
+            }
+        }
+
         return (
             <div className="container">
                 {settingsMenu ? <SettingsMenu settingsDisappear={settingsDisappear}
                     currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef}
-                    onColorSubmit={onColorSubmit} currentColor={currentColor} changePassword={changePassword} changedPwd={changedPwd} wrongPwd={wrongPwd}/> : undefined}
+                    onColorSubmit={onColorSubmit} currentColor={currentColor}
+                    changePassword={changePassword} changedPwd={changedPwd} wrongPwd={wrongPwd}
+                    onDeleteAccountSubmit={onDeleteAccountSubmit} deleteConfirmation={deleteConfirmation}
+                    deleteConfirmationHandler={deleteConfirmationHandler} /> : undefined}
                 {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage} /> : undefined}
                 {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers} /> : undefined}
                 <div className="app" onClick={disappearAppMenu}>
