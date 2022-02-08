@@ -55,10 +55,6 @@
     overflow: auto;
 }
 
-.settingsBody button {
-    color: rgba(241, 241, 242, 0.65);
-}
-
 .settingsBody::-webkit-scrollbar {
     width: 6px;
     border-radius: 10px;

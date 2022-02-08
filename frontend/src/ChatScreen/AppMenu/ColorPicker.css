@@ -43,7 +43,7 @@
 .colorButton {
     background-color: transparent;
     border: none;
-    color: rgb(130 134 137);
+    color: rgba(241, 241, 242, 0.65);
     font-size: 20px;
     cursor: pointer;
     display: flex;
