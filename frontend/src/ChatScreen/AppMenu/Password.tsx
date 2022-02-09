@@ -1,6 +1,6 @@
 import React from "react"
 import Icon from "@mdi/react"
-import { mdiFormTextboxPassword, mdiLogin } from '@mdi/js';
+import { mdiFormTextboxPassword, mdiLockReset } from '@mdi/js';
 import "./Password.css"
 
 export interface PasswordProps {
@@ -57,7 +57,7 @@ export default class Password extends React.Component<PasswordProps> {
                     </div>
                     <button type="submit" className="passwordButton">
                         Change Password
-                        <Icon path={mdiLogin} size={"1em"} />
+                        <Icon path={mdiLockReset} size={"1em"} />
                     </button>
                 </form>
             </div>

@@ -36,3 +36,7 @@
     align-items: center;
     justify-self: flex-end;
 }
+
+.nickButton:hover {
+    color: rgba(241, 241, 242, 1);
+}

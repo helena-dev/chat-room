@@ -52,6 +52,10 @@
     align-self: flex-end;
 }
 
+.colorButton:hover {
+    color: rgba(241, 241, 242, 1);
+}
+
 .colorTip {
     font-size: 10px;
     font-weight: 600;

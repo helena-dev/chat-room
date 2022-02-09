@@ -22,6 +22,10 @@
     align-items: center;
 }
 
+.deleteButton:hover {
+    color: rgba(241, 241, 242, 1);
+}
+
 .deleteConfirmation {
     font-size: 15px;
 }
@@ -47,6 +51,10 @@
     border-radius: 7.5px;
     background-color: hsl(240, 4%, 95%);
     color: rgb(51, 56, 59);
+}
+
+.deleteConfirmationButton:hover {
+    background-color: hsl(240, 4%, 80%);
 }
 
 .deleteReminder {
