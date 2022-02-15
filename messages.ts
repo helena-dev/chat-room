@@ -33,11 +33,12 @@ export interface UserList {
 
 export interface UserInfo {
     name: string;
-    lastActivity: Date;
+    lastActivity: number;
+    connected: boolean;
     online: boolean;
     own: boolean;
-    cssColor: string;
-    ipInfo: {
+    cssColor?: string;
+    ipInfo?: {
         region?: string,
         countryCode?: string,
         city?: string,

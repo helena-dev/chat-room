@@ -188,26 +188,40 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
         }
     }
 
-    function sendUserList() {
-        for (const connectionData of Object.values(users)) {
+    async function getRegisteredUsers(): Promise<{ user_name: string, last_activity: Date }[]> {
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT user_name, last_activity FROM users;") /* FIXME */
+        return rows
+    }
+
+    async function sendUserList() {
+        const registeredUsers = await getRegisteredUsers()
+        for (const [targetUser, connectionData] of Object.entries(users)) {
             connectionData.send({
                 type: "userList",
-                users: Object.entries(users).map(x => {
-                    const { region, countryCode, city } = x[1].currentIP || {}
-                    const { bogon } = (x[1].currentIP as any || {})
-                    const { lastActivity, online, cssColor } = x[1]
-                    return {
-                        name: x[0],
-                        lastActivity,
-                        online,
-                        own: x[1].connection === connectionData.connection,
-                        cssColor,
-                        ipInfo: {
+                users: registeredUsers.map(user => {
+                    const connected = Object.hasOwnProperty.call(users, user.user_name)
+                    const userInfo = {
+                        name: user.user_name,
+                        connected,
+                        own: user.user_name === targetUser,
+                    }
+                    if (connected) {
+                        const userData = users[user.user_name]
+                        const { region, countryCode, city } = userData.currentIP || {}
+                        const { bogon } = (userData.currentIP as any || {})
+                        const { online, cssColor } = userData
+                        const lastActivity = userData.lastActivity.getTime()
+                        const ipInfo = {
                             region,
                             countryCode,
                             city,
                             bogon,
                         }
+                        return { ...userInfo, lastActivity, online, cssColor, ipInfo }
+                    } else {
+                        const lastActivity = user.last_activity.getTime()
+                        const online = false
+                        return { ...userInfo, lastActivity, online }
                     }
                 })
             })

@@ -43,13 +43,19 @@ export default class UserCard extends React.Component<UserCardProps> {
         )
         return (
             <div className="user">
-                <span className="user-name">
-                    {user.name}
-                </span>
+                <div className="user-name-container">
+                    <span className="user-name">
+                        {user.name}
+                    </span>
+                    <span className="user-connected" style={{ backgroundColor: !user.connected ? "IndianRed" : "green" }}></span>
+                </div>
                 {userActivity}
-                <span className="user-loc">
-                    {formatUserLocation(region, countryCode, bogon, city)}
-                </span>
+                {user.ipInfo ?
+                    <span className="user-loc">
+                        {formatUserLocation(region, countryCode, bogon, city)}
+                    </span> :
+                    undefined
+                }
             </div>
         )
     }
