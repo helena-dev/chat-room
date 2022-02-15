@@ -34,7 +34,13 @@ export default class UserCard extends React.Component<UserCardProps> {
         const { region, countryCode, bogon, city } = user.ipInfo || {}
         const lastActivityDate = new Date(user.lastActivity)
         const onlineStatus = user.online
-        const userActivityInfo = [["typing...", "fancyText"], ["online", "fancyText"], ["last seen " + formatDate(lastActivityDate), "plainText"]]
+        const currentDate = new Date()
+        const userDate = lastActivityDate.getFullYear() !== currentDate.getFullYear() ?
+            lastActivityDate.toLocaleDateString("en-IE", { month: "short", year: "numeric" }) :
+            lastActivityDate.getDay() !== currentDate.getDay() ?
+                lastActivityDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" }) :
+                formatDate(lastActivityDate)
+        const userActivityInfo = [["typing...", "fancyText"], ["online", "fancyText"], ["last seen " + userDate, "plainText"]]
         const position = typingStatus ? 0 : (onlineStatus ? 1 : 2)
         const userActivity = (
             <span className={"user-activity " + userActivityInfo[position][1]}>
