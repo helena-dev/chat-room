@@ -2,36 +2,54 @@ import React from "react"
 import { BackMessage, FrontMessage, LoginResponse, SignupResponse } from "../../messages"
 import "./App.css"
 import ChatScreen from "./ChatScreen/ChatScreen"
-import LoginScreen from "./Login_Signup/LoginScreen"
-import SignupScreen from "./Login_Signup/SignupScreen"
+import ErrorScreen, { ErrorReason } from "./SessionScreens/ErrorScreen"
+import LoadingScreen from "./SessionScreens/LoadingScreen"
+import LoginScreen from "./SessionScreens/LoginScreen"
+import SignupScreen from "./SessionScreens/SignupScreen"
 import { assertUnreachable } from "./utils"
 
 export interface AppState {
-    phase: "login" | "connected"
+    phase: "error" | "loading" | "login" | "connected"
     failed: boolean
     signup: boolean
     usedUsername: boolean
     failedCaptcha: boolean
+    errorReason?: ErrorReason
 }
 
-export default class App extends React.Component {
+export default class App extends React.Component<{}, AppState> {
     con?: WebSocket
     chatScreenRef = React.createRef<ChatScreen>()
     failedTimeout: any
 
-    state: AppState = { phase: "login", failed: false, signup: false, usedUsername: false, failedCaptcha: false }
+    state: AppState = { phase: "loading", failed: false, signup: false, usedUsername: false, failedCaptcha: false }
 
     componentDidMount() {
         this.newCon()
     }
 
     componentWillUnmount() {
-        this.con?.close()
+        this.closeCon()
         this.cancelTimeout()
     }
 
+    closeCon() {
+        if (this.con) {
+            this.con.onclose = null
+            this.con.close()
+            this.con = undefined
+        }
+    }
+
     newCon() {
+        this.closeCon()
         this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
+        this.setState({ phase: "loading" })
+        this.con.onopen = () => this.setState({ phase: "login" })
+        this.con.onclose = () => {
+            const errorReason = this.state.phase === "loading" ? "connectionFailed" : "disconnected"
+            this.setState({ phase: "error", errorReason })
+        }
         this.con.onmessage = (event) => this.receive(event)
     }
 
@@ -72,13 +90,13 @@ export default class App extends React.Component {
             this.setState({ failed: true })
             this.failedTimeout = setTimeout(() => {
                 this.failedTimeout = undefined
-                this.setState({ failed: false, usedUsername: false, failedCaptcha: false})
+                this.setState({ failed: false, usedUsername: false, failedCaptcha: false })
             }, 2000)
         }
     }
 
     render() {
-        const { phase, failed, signup, usedUsername, failedCaptcha } = this.state
+        const { phase, failed, signup, usedUsername, failedCaptcha, errorReason } = this.state
 
         const getLoginInfo = (userName: string, password: string) => {
             this.send({
@@ -103,19 +121,25 @@ export default class App extends React.Component {
         }
 
         const logout = () => {
-            this.con!.close()
-            this.setState({ phase: "login" })
+            this.newCon()
+        }
+
+        const onReconnect = () => {
             this.newCon()
         }
 
         return (
-            phase === "login" ?
-                (!signup ?
-                    <LoginScreen getLoginInfo={getLoginInfo} failedLogin={failed} goSignup={goSignup} /> :
-                    <SignupScreen getSignupInfo={getSignupInfo} failedSignup={failed} usedUsername={usedUsername} failedCaptcha={failedCaptcha} />) :
-                phase === "connected" ?
-                    <ChatScreen ref={this.chatScreenRef} onSendMessage={(data) => this.send(data)} logout={logout}/> :
-                    assertUnreachable()
+            phase === "error" ?
+                <ErrorScreen onReconnect={onReconnect} reason={errorReason} /> :
+                phase === "loading" ?
+                    <LoadingScreen /> :
+                    phase === "login" ?
+                        (!signup ?
+                            <LoginScreen getLoginInfo={getLoginInfo} failedLogin={failed} goSignup={goSignup} /> :
+                            <SignupScreen getSignupInfo={getSignupInfo} failedSignup={failed} usedUsername={usedUsername} failedCaptcha={failedCaptcha} />) :
+                        phase === "connected" ?
+                            <ChatScreen ref={this.chatScreenRef} onSendMessage={(data) => this.send(data)} logout={logout} /> :
+                            assertUnreachable()
         )
     }
 }

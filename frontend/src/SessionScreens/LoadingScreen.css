@@ -1,0 +1,31 @@
+.loadingContainer {
+    background: rgb(42, 47, 50);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: rgba(241, 241, 242, 0.7);
+    gap: 30px;
+}
+
+.loadingSpinner {
+    border-radius: 50px;
+    height: 40px;
+    width: 40px;
+    border: 5px solid rgb(30 36 40);
+    font-size: 30px;
+    animation: rotation 1.5s infinite linear;
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    } to {
+        transform: rotate(360deg);
+    }
+}
+
+.loadingText {
+    font-size: 15px;
+}
