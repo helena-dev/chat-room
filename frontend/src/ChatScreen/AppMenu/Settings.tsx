@@ -14,10 +14,10 @@ export default class Settings extends React.Component<SettingsProps> {
         return (
             <div className="settings">
                 <button className="settingsButton" type="button" onClick={onSettingsClick}>
-                    <span className="settingsSpan">Settings</span>
                     <div className="settingsIcon">
                         <Icon path={mdiCog} size={"1em"} />
                     </div>
+                    <span className="settingsSpan">Settings</span>
                 </button>
             </div>
         )

@@ -13,10 +13,10 @@ export default class Logout extends React.Component<LogoutProps> {
         return (
             <div className="logout">
                 <button className="logoutButton" type="button" onClick={onLogoutClick}>
-                    <span className="logoutSpan">Logout</span>
                     <div className="logoutIcon">
                         <Icon path={mdiLogout} size={"1em"} />
                     </div>
+                    <span className="logoutSpan">Logout</span>
                 </button>
             </div>
         )
