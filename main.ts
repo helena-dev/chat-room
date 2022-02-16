@@ -7,7 +7,7 @@ import { createServer } from "http"
 import got from "got"
 
 const { RECAPTCHA_PRIVATEKEY } = process.env
-if(!RECAPTCHA_PRIVATEKEY) throw "Recaptcha private key needed.\r\n"
+if (!RECAPTCHA_PRIVATEKEY) throw "Recaptcha private key needed.\r\n"
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -77,7 +77,7 @@ server.on("connection", (con, request) => {
         const captchaVerifyResponse: any = await got.post("https://www.google.com/recaptcha/api/siteverify", {
             form: params
         }).json()
-        if(!captchaVerifyResponse.success) {
+        if (!captchaVerifyResponse.success) {
             send({
                 type: "signup",
                 ok: false,
@@ -121,7 +121,7 @@ async function checkCredentials(userName: string, password: string) {
 }
 
 async function addCredentials(userName: string, password: string) {
-    if(!userName || !password) return -2
+    if (!userName || !password) return -2
     try {
         await mysqlCon.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, password, new Date()])
         return 0
@@ -336,14 +336,14 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
     async function changePassword(oldPwd: string, newPwd: string) {
         const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [currentCon.toLowerCase()])
         const sqlPassword = rows[0].password
-        if(sqlPassword === oldPwd) {
+        if (sqlPassword === oldPwd) {
             mysqlCon.execute("UPDATE users SET password = ? WHERE user_name_lowercase = ?;", [newPwd, currentCon.toLowerCase()])
             connectionData.send({
                 type: "password",
                 ok: true
             })
         } else {
-            connectionData.send ({
+            connectionData.send({
                 type: "password",
                 ok: false,
             })
@@ -353,12 +353,12 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
     async function deleteAccount(password: string) {
         const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [currentCon.toLowerCase()])
         const sqlPassword = rows[0].password
-        if(sqlPassword === password) {
+        if (sqlPassword === password) {
             connectionData.send({
                 type: "deleteConfirmation",
             })
         } else {
-            connectionData.send ({
+            connectionData.send({
                 type: "password",
                 ok: false,
             })
