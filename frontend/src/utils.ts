@@ -9,7 +9,7 @@ export function formatDate(preformatDate: Date): string {
 }
 
 export function assertUnreachable(): never {
-    throw Error("owo")
+    throw Error("Unreachable code. Prolly a bug and stuff.")
 }
 
 export function rgbToHex([r, g, b]: number[]): number {
