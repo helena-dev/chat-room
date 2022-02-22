@@ -600,12 +600,13 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         )
 
         const topBarText = !currentUserList ? "Loading..." : ((userList, typingList) => {
+            const connectedUsers = userList.users.filter(user => user.connected)
             const funcMap = new Map(typingList)
             if (funcMap.has(currentNick!)) funcMap.delete(currentNick!)
             const typingNum = funcMap.size
             if (!typingNum) {
-                const userNum = userList.users.length
-                const onlineUsersNum = userList.users.filter(x => x.online).length
+                const userNum = connectedUsers.length
+                const onlineUsersNum = connectedUsers.filter(x => x.online).length
                 const membership = userNum === 1 ? " member" : " members"
                 return userNum + membership + (onlineUsersNum > 1 ? ", " + onlineUsersNum + " online" : "")
             } else {

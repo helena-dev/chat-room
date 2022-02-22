@@ -1,7 +1,7 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { RawData, WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
-import type { BackMessage, FrontMessage, LoginRequest, SignupRequest } from "./messages"
+import type { BackMessage, FrontMessage, LoginRequest, ReceivedMessage, SignupRequest } from "./messages"
 import { Connection, createConnection } from 'mysql2/promise'
 import { createServer } from "http"
 import got from "got"
@@ -17,13 +17,11 @@ if (!process.env.IPINFO_TOKEN) {
 }
 
 interface ConnectionData {
-    connection: WebSocket
-    currentIP: IPinfo
-    lastActivity: Date
-    online: boolean
+    name: string
+    cons: Map<number, { conSocket: WebSocket, currentIP: IPinfo, online: boolean, lastActivity: Date }>
     colorNum: number
     get cssColor(): string
-    send(data: BackMessage): void
+    send(sockets: WebSocket, data: BackMessage): void
 }
 
 let conNum = 0
@@ -55,6 +53,12 @@ server.on("connection", (con, request) => {
     function send(data: BackMessage) {
         con.send(JSON.stringify(data))
     }
+
+    const getUserId = async (name: string): Promise<number> => {
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT id FROM users WHERE user_name_lowercase = ? LIMIT 1;", [name.toLowerCase()])
+        return rows[0].id
+    }
+
     const handleLogin = async (data: LoginRequest) => {
         const valid = await checkCredentials(data.userName, data.password)
         const connectionIpInfo = await ipinfoPromise
@@ -63,9 +67,10 @@ server.on("connection", (con, request) => {
             ok: valid,
         })
         if (valid && !completed) {
+            const id = await getUserId(data.userName)
             completed = true
             con.off("message", messageHandler)
-            handlePostLogin(con, connectionIpInfo, data.userName)
+            handlePostLogin(con, connectionIpInfo, data.userName, id)
         }
     }
     const handleSignup = async (data: SignupRequest) => {
@@ -94,9 +99,10 @@ server.on("connection", (con, request) => {
             err: code,
         })
         if (code === 0 && !completed) {
+            const id = await getUserId(data.userName)
             completed = true
             con.off("message", messageHandler)
-            handlePostLogin(con, connectionIpInfo, data.userName)
+            handlePostLogin(con, connectionIpInfo, data.userName, id)
         }
     }
 
@@ -130,7 +136,8 @@ async function addCredentials(userName: string, password: string) {
     }
 }
 
-const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => {
+const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: number) => {
+    const myConNum = conNum
     conNum++
 
     const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
@@ -143,114 +150,132 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
     }
 
     const connectionData: ConnectionData = {
-        connection: con,
-        currentIP: ipinfo,
-        lastActivity: new Date(),
-        online: true,
+        name,
+        cons: new Map(),
         colorNum: findNum(colorNumSet),
 
         get cssColor() {
-            if (currentCon === process.env.SPECIAL_USER_COLOR) {
+            if (name === process.env.SPECIAL_USER_COLOR) {
                 return "orchid"
             }
             const pos = getMagicColorSequence(this.colorNum)
             return `hsl(${pos * 360}, 100%, 50%)`
         },
-        send(data: BackMessage) {
-            this.connection.send(JSON.stringify(data))
+        send(socket, data: BackMessage) {
+            socket.send(JSON.stringify(data))
         },
     }
-    users[currentCon] = connectionData
+    let oldColorNum: number | undefined = 0
+    let otherConnections
+    if (users[userId]) {
+        oldColorNum = users[userId].colorNum
+        otherConnections = users[userId].cons.entries()
+    }
+    users[userId] = connectionData
+    users[userId].cons = otherConnections ? new Map(otherConnections) : new Map()
+    if (typeof oldColorNum === "number") users[userId].colorNum = oldColorNum
+    users[userId].cons.set(myConNum, { conSocket: con, currentIP: ipinfo, online: true, lastActivity: new Date(), })
 
     async function changeName(text: string) {
         if (text.length > 20) return punish()
-        if (text in users) return
-        const oldName = currentCon
+        if (Object.hasOwnProperty.call(users[userId], text)) return
+        const oldName = users[userId].name
         try {
-            await mysqlCon.execute("UPDATE users SET user_name_lowercase = ?, user_name = ? WHERE user_name_lowercase = ?;", [text.toLowerCase(), text, oldName.toLowerCase()])
-            users[text] = connectionData
-            delete users[oldName]
-            currentCon = text
+            await mysqlCon.execute("UPDATE users SET user_name_lowercase = ?, user_name = ? WHERE id = ?;", [text.toLowerCase(), text, userId])
+            users[userId].name = text
+            name = text
             sendUserList()
             const id = generateMsgId()
-            for (const connectionData of Object.values(users)) {
-                connectionData.send({
-                    type: "toast",
-                    toast: "nickChange",
-                    oldName,
-                    newName: currentCon,
-                    own: (connectionData.connection === con),
-                    msgNum: id,
-                })
+            for (const [targetUserId, targetConnectionData] of Object.entries(users)) {
+                for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
+                    targetConnectionData.send(socket, {
+                        type: "toast",
+                        toast: "nickChange",
+                        oldName,
+                        newName: name,
+                        own: parseInt(targetUserId) === userId,
+                        msgNum: id,
+                    })
+                }
             }
-        } catch {
+        } catch (err) {
+            console.log(err)
             return
         }
     }
 
-    async function getRegisteredUsers(): Promise<{ user_name: string, last_activity: Date }[]> {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT user_name, last_activity FROM users;") /* FIXME */
+    async function getRegisteredUsers(): Promise<{ user_name: string, id: string, last_activity: Date }[]> {
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT user_name, id, last_activity FROM users;") /* FIXME */
         return rows
     }
 
     async function sendUserList() {
         const registeredUsers = await getRegisteredUsers()
-        for (const [targetUser, connectionData] of Object.entries(users)) {
-            connectionData.send({
-                type: "userList",
-                users: registeredUsers.map(user => {
-                    const connected = Object.hasOwnProperty.call(users, user.user_name)
-                    const userInfo = {
-                        name: user.user_name,
-                        connected,
-                        own: user.user_name === targetUser,
-                    }
-                    if (connected) {
-                        const userData = users[user.user_name]
-                        const { region, countryCode, city } = userData.currentIP || {}
-                        const { bogon } = (userData.currentIP as any || {})
-                        const { online, cssColor } = userData
-                        const lastActivity = userData.lastActivity.getTime()
-                        const ipInfo = {
-                            region,
-                            countryCode,
-                            city,
-                            bogon,
+        for (const [targetUser, targetConnectionData] of Object.entries(users)) {
+            for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
+                targetConnectionData.send(socket, {
+                    type: "userList",
+                    users: registeredUsers.map(user => {
+                        const connected = Object.hasOwnProperty.call(users, user.id)
+                        const userInfo = {
+                            name: user.user_name,
+                            connected,
+                            own: `${user.id}` === targetUser
                         }
-                        return { ...userInfo, lastActivity, online, cssColor, ipInfo }
-                    } else {
-                        const lastActivity = user.last_activity.getTime()
-                        const online = false
-                        return { ...userInfo, lastActivity, online }
-                    }
+                        if (connected) {
+                            const userData = users[`${user.id}`]
+                            const lastActivity = [...userData.cons.values()].map(x => x.lastActivity).sort().slice(-1)[0].getTime()
+                            const numLastActivity = (socket === con && `${userId}` === user.id) ? myConNum : [...userData.cons.entries()].filter(x => x[1].lastActivity.getTime() === lastActivity)[0][0]
+                            const { region, countryCode, city } = userData.cons.get(numLastActivity)?.currentIP || {}
+                            const { bogon } = (userData.cons.get(numLastActivity)?.currentIP as any || {})
+                            const { cssColor } = userData
+                            const online = [...userData.cons.values()].map(x => x.online).includes(true)
+                            const ipInfo = {
+                                region,
+                                countryCode,
+                                city,
+                                bogon,
+                            }
+                            return { ...userInfo, lastActivity, online, cssColor, ipInfo }
+                        } else {
+                            const lastActivity = user.last_activity.getTime()
+                            const online = false
+                            return { ...userInfo, lastActivity, online }
+                        }
+                    })
                 })
-            })
+            }
         }
     }
 
     function userNumChange(sign: "plus" | "minus") {
         const id = generateMsgId()
-        for (const connectionData of Object.values(users)) {
-            connectionData.send({
-                type: "toast",
-                toast: "userChange",
-                sign,
-                name: currentCon,
-                own: (connectionData.connection === con),
-                msgNum: id,
-            })
+        for (const [targetUserId, targetConnectionData] of Object.entries(users)) {
+            const sockets = [...targetConnectionData.cons.values()].map(x => x.conSocket)
+            for (const socket of sockets) {
+                targetConnectionData.send(socket, {
+                    type: "toast",
+                    toast: "userChange",
+                    sign,
+                    name,
+                    own: parseInt(targetUserId) === userId,
+                    msgNum: id,
+                })
+            }
         }
     }
 
-    mysqlCon.execute<any[]>("SELECT bkg_color FROM users WHERE user_name_lowercase = ?", [currentCon.toLowerCase()])
+    mysqlCon.execute<any[]>("SELECT bkg_color FROM users WHERE id = ?", [userId])
         .then(([rows, fields]) => {
-            connectionData.send({
-                type: "bkgColor",
-                color: rows[0].bkg_color,
-            })
+            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket)) {
+                users[userId].send(socket, {
+                    type: "bkgColor",
+                    color: rows[0].bkg_color,
+                })
+            }
         }, () => console.log("efe"))
     sendUserList()
-    userNumChange("plus")
+    if (users[userId].cons.size === 1) userNumChange("plus")
 
     con.on("message", chunk => {
         const data: FrontMessage = JSON.parse(chunk.toString())
@@ -261,129 +286,178 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, currentCon: string) => 
                 if (!matches || !matches[0].startsWith("image/") || matches[1].length > 30 * 2 ** 20) return punish()
             }
             const id = generateMsgId()
-            for (const targetConnectionData of Object.values(users)) {
-                if (targetConnectionData.connection !== con) {
-                    targetConnectionData.send({
-                        type: "message",
-                        text: data.text,
-                        image: data.image,
-                        own: targetConnectionData.connection === con,
-                        from: currentCon,
-                        date: new Date(),
-                        cssColor: connectionData.cssColor,
-                        msgNum: id,
-                        replyNum: data.replyNum,
-                        edited: false,
-                    })
-                } else if (targetConnectionData.connection === con) {
-                    targetConnectionData.send({
-                        type: "ackMessage",
-                        date: new Date(),
-                        cssColor: connectionData.cssColor,
-                        msgNum: id,
-                        pseudoId: data.pseudoId
-                    })
+            const messageData: ReceivedMessage = {
+                type: "message",
+                text: data.text,
+                image: data.image,
+                own: false,
+                from: name,
+                date: new Date(),
+                cssColor: users[userId].cssColor,
+                msgNum: id,
+                replyNum: data.replyNum,
+                edited: false,
+            }
+            for (const [targetUserId, targetConnectionData] of Object.entries(users)) {
+                if (parseInt(targetUserId) !== userId) {
+                    for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
+                        targetConnectionData.send(socket, {
+                            ...messageData,
+                            own: false,
+                        })
+                    }
+                } else if (parseInt(targetUserId) === userId) {
+                    const sockets = [...targetConnectionData.cons.values()].map(x => x.conSocket)
+                    for (const socket of sockets) {
+                        if (socket === con) {
+                            targetConnectionData.send(socket, {
+                                type: "ackMessage",
+                                date: new Date(),
+                                cssColor: users[userId].cssColor,
+                                msgNum: id,
+                                pseudoId: data.pseudoId
+                            })
+                        } else {
+                            targetConnectionData.send(socket, {
+                                ...messageData,
+                                own: true,
+                            })
+                        }
+                    }
                 }
             }
         } else if (data.type === "userName") {
             changeName(data.text)
         } else if (data.type === "isOnline") {
-            connectionData.online = data.online
+            const date = new Date()
+            users[userId].cons.set(myConNum, { conSocket: con, currentIP: ipinfo, online: data.online, lastActivity: date })
             if (!data.online) {
-                const date = new Date()
-                connectionData.lastActivity = date
-                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name_lowercase = ?;", [date, currentCon.toLowerCase()])
+                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE id = ?;", [date, userId])
                     .catch(() => console.log("efe"))
             }
             sendUserList()
         } else if (data.type === "typing") {
             for (const targetConnectionData of Object.values(users)) {
-                targetConnectionData.send({
-                    type: "typing",
-                    from: currentCon,
-                })
+                for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
+                    targetConnectionData.send(socket, {
+                        type: "typing",
+                        from: name,
+                    })
+                }
             }
         } else if (data.type === "deleteMsg") {
             const msgId = data.msgNum
             for (const targetConnectionData of Object.values(users)) {
-                targetConnectionData.send({
-                    type: "deleteMsg",
-                    msgNum: msgId,
-                })
+                for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
+                    targetConnectionData.send(socket, {
+                        type: "deleteMsg",
+                        msgNum: msgId,
+                    })
+                }
             }
         } else if (data.type === "edit") {
             for (const targetConnectionData of Object.values(users)) {
-                targetConnectionData.send({
-                    type: "edit",
-                    msgNum: data.msgNum,
-                    text: data.text,
-                })
+                for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
+                    targetConnectionData.send(socket, {
+                        type: "edit",
+                        msgNum: data.msgNum,
+                        text: data.text,
+                    })
+                }
             }
         } else if (data.type === "bkgColor") {
-            mysqlCon.execute("UPDATE users SET bkg_color = ? WHERE user_name_lowercase = ?;", [data.color, currentCon.toLowerCase()])
+            mysqlCon.execute("UPDATE users SET bkg_color = ? WHERE id = ?;", [data.color, userId])
                 .catch(() => console.log("efe"))
+            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket).filter(x => x !== con)) {
+                users[userId].send(socket, {
+                    type: "bkgColor",
+                    color: data.color,
+                })
+            }
         } else if (data.type === "password") {
             changePassword(data.oldPwd, data.newPwd)
         } else if (data.type === "deleteAccount") {
             deleteAccount(data.password)
         } else if (data.type === "deleteAccountYes") {
-            mysqlCon.execute("DELETE FROM users WHERE user_name_lowercase = ?;", [currentCon.toLowerCase()])
+            [...users[userId].cons.values()].map(x => x.conSocket).forEach(x => x.close())
+            mysqlCon.execute("DELETE FROM users WHERE id = ?;", [userId])
         } else {
             throw Error("owo")
         }
     })
 
     async function changePassword(oldPwd: string, newPwd: string) {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [currentCon.toLowerCase()])
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId])
         const sqlPassword = rows[0].password
         if (sqlPassword === oldPwd) {
-            mysqlCon.execute("UPDATE users SET password = ? WHERE user_name_lowercase = ?;", [newPwd, currentCon.toLowerCase()])
-            connectionData.send({
-                type: "password",
-                ok: true
-            })
+            mysqlCon.execute("UPDATE users SET password = ? WHERE id = ?;", [newPwd, userId])
+            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket)) {
+                connectionData.send(socket, {
+                    type: "password",
+                    ok: true
+                })
+            }
         } else {
-            connectionData.send({
-                type: "password",
-                ok: false,
-            })
+            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket)) {
+                connectionData.send(socket, {
+                    type: "password",
+                    ok: false,
+                })
+            }
         }
     }
 
     async function deleteAccount(password: string) {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [currentCon.toLowerCase()])
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId]) /* FIXME disconnect all cons from user*/
         const sqlPassword = rows[0].password
         if (sqlPassword === password) {
-            connectionData.send({
-                type: "deleteConfirmation",
-            })
+            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket).filter(x => x === con)) {
+                connectionData.send(socket, {
+                    type: "deleteConfirmation",
+                })
+            }
         } else {
-            connectionData.send({
-                type: "password",
-                ok: false,
-            })
+            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket).filter(x => x === con)) {
+                connectionData.send(socket, {
+                    type: "password",
+                    ok: false,
+                })
+            }
         }
     }
 
     function punish() {
         const id = generateMsgId()
-        connectionData.send({
-            type: "toast",
-            toast: "punish",
-            text: "Don't mess with the code. Bye.",
-            msgNum: id,
-        })
+        for (const socket of [...users[userId].cons.values()].map(x => x.conSocket)) {
+            connectionData.send(socket, {
+                type: "toast",
+                toast: "punish",
+                text: "Don't mess with the code. Bye.",
+                msgNum: id,
+            })
+        }
         con.close()
     }
 
-    con.on("close", () => {
-        console.log(`User ${currentCon} has left. :(`)
-        if (users[currentCon].online) {
-            mysqlCon.execute("UPDATE users SET last_activity = ? WHERE user_name_lowercase = ?;", [new Date(), currentCon.toLowerCase()])
-                .catch(() => console.log("efe"))
+    const close = () => {
+        con.off("close", close)
+        con.off("error", close)
+        if (users[userId].cons.size === 1) {
+            if (users[userId].cons.get(myConNum)?.online) {
+                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE id = ?;", [new Date(), userId])
+                    .catch(() => console.log("efe"))
+            }
+            console.log(`User ${name} has left. :(`)
+            delete users[userId]
+            userNumChange("minus")
+        } else {
+            users[userId].cons.delete(myConNum)
         }
-        delete users[currentCon]
-        userNumChange("minus")
+
         sendUserList()
-    })
+    }
+
+    con.on("close", close)
+    con.on("error", close)
+
 }
