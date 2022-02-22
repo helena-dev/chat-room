@@ -1,3 +1,5 @@
+import { IPinfo } from "node-ipinfo"
+
 export type BackMessage =
     UserList |
     Toast |
@@ -10,7 +12,8 @@ export type BackMessage =
     SignupResponse |
     UpdateBkgColor |
     UpdatePassword |
-    DeleteConfirmation
+    DeleteConfirmation |
+    OwnConnections
 
 export type FrontMessage =
     SentMessage |
@@ -183,4 +186,17 @@ export interface DeleteConfirmation {
 
 export interface DeleteAccountYes {
     type: "deleteAccountYes"
+}
+
+export interface OwnConnections {
+    type: "ownCons";
+    connections: Connection[]
+}
+
+export interface Connection {
+    conNum: number;
+    own: boolean;
+    currentIP: IPinfo;
+    online: boolean;
+    lastActivity: Date;
 }

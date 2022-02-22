@@ -1,0 +1,43 @@
+.ownConsContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: left;
+    box-sizing: border-box;
+    margin: 0 10px;
+    font-size: 14px;
+    color: hsla(240, 4%, 80%, 0.73);
+    gap: 3px;
+}
+
+.ownConsVertical {
+    display: flex;
+    padding: 10px 0;
+    padding-left: 25px;
+}
+
+.ownConsVertical {
+    font-size: 20px;
+}
+
+.ownConsActivity {
+    white-space: nowrap;
+    padding: 1px 0px;
+
+}
+
+.ownConsActivity.plainText {
+    font-weight: 400;
+}
+
+.ownConsActivity.fancyText {
+    font-weight: 500;
+}
+
+.ownConsLoc {
+    text-overflow: ellipsis;
+
+}
+
+.ownConsLoc svg {
+    vertical-align: middle;
+}

@@ -210,6 +210,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     }
 
     async function sendUserList() {
+        sendOwnCons()
         const registeredUsers = await getRegisteredUsers()
         for (const [targetUser, targetConnectionData] of Object.entries(users)) {
             for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
@@ -260,6 +261,24 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
                     name,
                     own: parseInt(targetUserId) === userId,
                     msgNum: id,
+                })
+            }
+        }
+    }
+
+    function sendOwnCons() {
+        if(users[userId]) {
+            const sockets = [...users[userId].cons.values()].map(x => x.conSocket)
+            for (const socket of sockets) {
+                users[userId].send(socket, {
+                    type: "ownCons",
+                    connections: [...users[userId].cons.entries()].map(x => {
+                        const { currentIP, online, lastActivity } = x[1]
+                        const conNum = x[0]
+                        const own = (socket === x[1].conSocket)
+                        const data = { conNum, own, currentIP, online, lastActivity }
+                        return data
+                    })
                 })
             }
         }

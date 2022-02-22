@@ -3,7 +3,7 @@ import { assertUnreachable, rgbToHex, hexToRgb } from "../utils"
 import Icon from "@mdi/react"
 import { mdiClose, mdiPaperclip, mdiSend } from "@mdi/js"
 import "./ChatScreen.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor, UpdatePassword } from "../../../messages"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor, UpdatePassword, Connection, OwnConnections } from "../../../messages"
 import ToastComponent from "./Message/Toast"
 import Message from "./Message/Message"
 import ReplyMessageComponent from "./Message/ReplyMessage"
@@ -37,6 +37,7 @@ interface ChatScreenState {
     changedPwd: boolean,
     wrongPwd: boolean,
     deleteConfirmation: boolean
+    ownCons: Connection[]
 }
 
 export interface ChatScreenProps {
@@ -66,7 +67,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     wrongPwdTimeout: any
     changedPwdTimeout: any
 
-    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false, changedPwd: false, wrongPwd: false, deleteConfirmation: false }
+    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false, changedPwd: false, wrongPwd: false, deleteConfirmation: false, ownCons: [] }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -144,6 +145,8 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             this.receivePwd(data)
         } else if (data.type === "deleteConfirmation") {
             this.receiveDeleteConfirmation()
+        } else if (data.type === "ownCons") {
+            this.receiveOwnCons(data)
         } else {
             assertUnreachable()
         }
@@ -277,6 +280,10 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         this.setState({ deleteConfirmation: true })
     }
 
+    receiveOwnCons(data: OwnConnections) {
+        this.setState({ ownCons: data.connections })
+    }
+
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
@@ -340,7 +347,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu, changedPwd, wrongPwd, deleteConfirmation } = this.state
+        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu, changedPwd, wrongPwd, deleteConfirmation, ownCons } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -712,7 +719,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                     onColorSubmit={onColorSubmit} currentColor={currentColor}
                     changePassword={changePassword} changedPwd={changedPwd} wrongPwd={wrongPwd}
                     onDeleteAccountSubmit={onDeleteAccountSubmit} deleteConfirmation={deleteConfirmation}
-                    deleteConfirmationHandler={deleteConfirmationHandler} /> : undefined}
+                    deleteConfirmationHandler={deleteConfirmationHandler} connections={ownCons}/> : undefined}
                 {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage} /> : undefined}
                 {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers} /> : undefined}
                 <div className="app" onClick={disappearAppMenu}>

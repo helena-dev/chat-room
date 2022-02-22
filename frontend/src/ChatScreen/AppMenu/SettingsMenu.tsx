@@ -4,6 +4,8 @@ import NickField from "./NickField";
 import ColorPicker from "./ColorPicker";
 import Password from "./Password";
 import DeleteAccount from "./DeleteAccount";
+import OwnCons from "./OwnConsList";
+import { Connection } from "../../../../messages";
 
 export interface SettingsMenuProps {
     settingsDisappear: () => void
@@ -18,6 +20,7 @@ export interface SettingsMenuProps {
     onDeleteAccountSubmit: (event: React.FormEvent<HTMLFormElement>) => void
     deleteConfirmation: boolean
     deleteConfirmationHandler: (event: React.MouseEvent<HTMLButtonElement>) => void
+    connections: Connection[]
 }
 
 export interface SettingsMenuState {
@@ -34,7 +37,7 @@ export default class SettingsMenu extends React.Component<SettingsMenuProps> {
         }
     }
     render() {
-        const { settingsDisappear, currentNick, onNickSubmit, reference, onColorSubmit, currentColor, changePassword, changedPwd, wrongPwd, onDeleteAccountSubmit, deleteConfirmation, deleteConfirmationHandler } = this.props
+        const { settingsDisappear, currentNick, onNickSubmit, reference, onColorSubmit, currentColor, changePassword, changedPwd, wrongPwd, onDeleteAccountSubmit, deleteConfirmation, deleteConfirmationHandler, connections } = this.props
         const { diffPassword } = this.state
         const visibility = changedPwd || wrongPwd || diffPassword ? "visible" : "hidden"
         const opacity = changedPwd || wrongPwd || diffPassword ? 1 : 0
@@ -59,6 +62,7 @@ export default class SettingsMenu extends React.Component<SettingsMenuProps> {
                         <ColorPicker onSubmit={onColorSubmit} currentColor={currentColor} />
                         <Password changePassword={changePassword} changedPwd={changedPwd} differentPasswords={diffentPasswords} />
                         <DeleteAccount onDeleteAccountSubmit={onDeleteAccountSubmit} deleteConfirmation={deleteConfirmation} deleteConfirmationHandler={deleteConfirmationHandler}/>
+                        <OwnCons connections={connections}/>
                     </div>
                 </div>
                 <div className="settingsToast" style={{ visibility, opacity }}>

@@ -1,0 +1,40 @@
+.ownConsListContainer {
+    display: flex;
+    flex-direction: column;
+}
+
+.ownConsListTitle {
+    margin: 0;
+}
+
+.ownConsListButton {
+    background-color: transparent;
+    border: none;
+    color: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    align-self: flex-start;
+    gap: 5px;
+    padding: 0;
+}
+
+.ownConsListButton:hover {
+    color: rgba(241, 241, 242, 0.8);
+}
+
+.ownConsListIcon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: transparent;
+    border: none;
+    font-size: 20px;
+    transition: 0.25s transform ease-in-out;
+}
+
+.ownConsListIcon.down {
+    transform: rotate(90deg);
+}
