@@ -40,7 +40,10 @@ if (!process.env.SQL_URL) {
             httpServer.listen({ port: 8080 }, () => console.log("The server is up and running."))
         })
 }
-const httpServer = createServer()
+const httpServer = createServer((request, response) => {
+    response.statusCode = 200
+    response.end("hello world\n")
+})
 const server = new WebSocketServer({ server: httpServer });
 
 server.on("connection", (con, request) => {
