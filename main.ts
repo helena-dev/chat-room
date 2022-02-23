@@ -168,7 +168,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
             socket.send(JSON.stringify(data))
         },
     }
-    let oldColorNum: number | undefined = 0
+    let oldColorNum: number | undefined = connectionData.colorNum
     let otherConnections
     if (users[userId]) {
         oldColorNum = users[userId].colorNum
