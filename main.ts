@@ -5,11 +5,14 @@ import type { BackMessage, FrontMessage, LoginRequest, ReceivedMessage, SignupRe
 import { Connection, createConnection } from 'mysql2/promise'
 import { createServer } from "http"
 import got from "got"
+import bcrypt from "bcryptjs"
 
 const { RECAPTCHA_PRIVATEKEY } = process.env
 if (!RECAPTCHA_PRIVATEKEY) throw "Recaptcha private key needed.\r\n"
 
 const isProduction = process.env.NODE_ENV === "production"
+
+const saltRounds = 9
 
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
@@ -130,13 +133,14 @@ async function checkCredentials(userName: string, password: string) {
     const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [userName.toLowerCase()])
     if (rows.length === 0) return false
     const sqlPassword = rows[0].password
-    return password === sqlPassword
+    return await bcrypt.compare(password, sqlPassword)
 }
 
 async function addCredentials(userName: string, password: string) {
     if (!userName || !password) return -2
+    const sqlPassword = await bcrypt.hash(password, saltRounds)
     try {
-        await mysqlCon.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, password, new Date()])
+        await mysqlCon.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, sqlPassword, new Date()])
         return 0
     } catch (err) {
         return (err as any).errno
@@ -415,40 +419,33 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     async function changePassword(oldPwd: string, newPwd: string) {
         const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId])
         const sqlPassword = rows[0].password
-        if (sqlPassword === oldPwd) {
-            mysqlCon.execute("UPDATE users SET password = ? WHERE id = ?;", [newPwd, userId])
-            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket)) {
-                connectionData.send(socket, {
-                    type: "password",
-                    ok: true
-                })
-            }
+        if (await bcrypt.compare(oldPwd, sqlPassword)) {
+            const newHash = await bcrypt.hash(newPwd, saltRounds)
+            mysqlCon.execute("UPDATE users SET password = ? WHERE id = ?;", [newHash, userId])
+            connectionData.send(con, {
+                type: "password",
+                ok: true
+            })
         } else {
-            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket)) {
-                connectionData.send(socket, {
-                    type: "password",
-                    ok: false,
-                })
-            }
+            connectionData.send(con, {
+                type: "password",
+                ok: false,
+            })
         }
     }
 
     async function deleteAccount(password: string) {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId]) /* FIXME disconnect all cons from user*/
+        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId])
         const sqlPassword = rows[0].password
-        if (sqlPassword === password) {
-            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket).filter(x => x === con)) {
-                connectionData.send(socket, {
-                    type: "deleteConfirmation",
-                })
-            }
+        if (await bcrypt.compare(password, sqlPassword)) {
+            connectionData.send(con, {
+                type: "deleteConfirmation",
+            })
         } else {
-            for (const socket of [...users[userId].cons.values()].map(x => x.conSocket).filter(x => x === con)) {
-                connectionData.send(socket, {
-                    type: "password",
-                    ok: false,
-                })
-            }
+            connectionData.send(con, {
+                type: "password",
+                ok: false,
+            })
         }
     }
 
