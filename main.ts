@@ -9,6 +9,8 @@ import got from "got"
 const { RECAPTCHA_PRIVATEKEY } = process.env
 if (!RECAPTCHA_PRIVATEKEY) throw "Recaptcha private key needed.\r\n"
 
+const isProduction = process.env.NODE_ENV === "production"
+
 let ipinfo: IPinfoWrapper;
 if (!process.env.IPINFO_TOKEN) {
     throw "IPinfo token does not exist.\r\n"
@@ -48,8 +50,10 @@ const server = new WebSocketServer({ server: httpServer });
 
 server.on("connection", (con, request) => {
     const socket = request.socket
-    const normedIP = normalizeIP(socket.remoteAddress!)
-    console.log(`A connection has arrived! Its number is ${conNum}.\nIts IP and port are: ${normedIP}, ${socket.remotePort}`)
+    const normedIP = isProduction ?
+        request.headers["x-forwarded-for"] as string :
+        normalizeIP(socket.remoteAddress!)
+    console.log(`A connection has arrived! Its number is ${conNum}.\nIts IP is: ${normedIP}`)
     const ipinfoPromise = ipinfo.lookupIp(normedIP)
 
     let completed = false
@@ -270,7 +274,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     }
 
     function sendOwnCons() {
-        if(users[userId]) {
+        if (users[userId]) {
             const sockets = [...users[userId].cons.values()].map(x => x.conSocket)
             for (const socket of sockets) {
                 users[userId].send(socket, {
