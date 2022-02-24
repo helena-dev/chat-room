@@ -1,6 +1,6 @@
 import { mdiChevronDown, mdiProgressClock, mdiCheck } from "@mdi/js"
 import Icon from "@mdi/react"
-import React from "react"
+import React, { Children } from "react"
 import Markdown from 'markdown-to-jsx'
 import { ReceivedMessage } from "../../../../messages"
 import "./Message.css"
@@ -39,7 +39,7 @@ export default class Message extends React.Component<MessageProps> {
         const msgDate = new Date(data.date)
         let msgClass = "message"
         let containerClass = "messageContainer"
-        if (data.own) {msgClass += " own"; containerClass += " own"}
+        if (data.own) { msgClass += " own"; containerClass += " own" }
         if (followup) containerClass += " followup"
         const imageHeight = data.image ? "100%" : "30vh"
         const imageWidth = (data.image || reply?.image) ? m * windowWidth + b + "%" : "75%"
@@ -63,7 +63,17 @@ export default class Message extends React.Component<MessageProps> {
                                 <img src={data.image} decoding="async"></img>}
                         </span>
                         <div className="message-textTime-container">
-                            <span className="message-text"><Markdown options={{ disableParsingRawHTML: true, forceInline: true }}>{data.text}</Markdown></span>
+                            <span className="message-text">
+                                <Markdown options={{
+                                    disableParsingRawHTML: true,
+                                    forceInline: true,
+                                    overrides: {
+                                        a: MessageLink,
+                                    },
+                                }}>
+                                    {data.text}
+                                </Markdown>
+                            </span>
                             <div className="message-infoContainer">
                                 {data.edited ? <span className="message-edited">edited</span> : undefined}
                                 <div className="message-time">{formatDate(msgDate)}</div>
@@ -81,4 +91,10 @@ export default class Message extends React.Component<MessageProps> {
             </div>
         )
     }
+}
+
+const MessageLink: React.FC = ({ children, ...props }) => {
+    return (
+        <a {...props} target="_blank">{children}</a>
+    )
 }
