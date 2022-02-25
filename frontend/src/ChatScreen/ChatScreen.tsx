@@ -74,7 +74,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     nickInputRef = React.createRef<HTMLInputElement>()
 
     componentDidMount() {
-        this.bell = new Audio("../assets/bell.oga")
+        this.bell = new Audio("/bell.oga")
         this.bell.addEventListener("canplaythrough", event => {
             this.bellReady = true;
         })
@@ -182,7 +182,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     }
 
     receiveMessage(data: ReceivedMessage): void {
-        if (document.hidden) {
+        if (document.hidden && !data.own) {
             this.notification(data)
         }
         this.setState({ messages: this.state.messages.concat([data]) })
