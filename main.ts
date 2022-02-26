@@ -2,7 +2,7 @@ import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { RawData, WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
 import type { BackMessage, FrontMessage, LoginRequest, ReceivedMessage, SignupRequest } from "./messages"
-import { Connection, createConnection } from 'mysql2/promise'
+import { Pool, createPool } from 'mysql2/promise'
 import { createServer } from "http"
 import got from "got"
 import bcrypt from "bcryptjs"
@@ -35,20 +35,19 @@ let msgNum = 0
 function generateMsgId() {
     return msgNum++
 }
-let mysqlCon: Connection;
+
+let mysqlPool: Pool;
 if (!process.env.SQL_URL) {
     throw "SQL DB does not exist.\r\n"
 } else {
-    createConnection(process.env.SQL_URL)
-        .then((con) => {
-            mysqlCon = con
-            httpServer.listen({ port: 8080 }, () => console.log("The server is up and running."))
-        })
+    mysqlPool = createPool({ uri: process.env.SQL_URL })
 }
+
 const httpServer = createServer((request, response) => {
     response.statusCode = 200
     response.end("hello world\n")
 })
+httpServer.listen({ port: 8080 }, () => console.log("The server is up and running."))
 const server = new WebSocketServer({ server: httpServer });
 
 server.on("connection", (con, request) => {
@@ -65,7 +64,7 @@ server.on("connection", (con, request) => {
     }
 
     const getUserId = async (name: string): Promise<number> => {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT id FROM users WHERE user_name_lowercase = ? LIMIT 1;", [name.toLowerCase()])
+        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT id FROM users WHERE user_name_lowercase = ? LIMIT 1;", [name.toLowerCase()])
         return rows[0].id
     }
 
@@ -130,7 +129,7 @@ server.on("connection", (con, request) => {
 })
 
 async function checkCredentials(userName: string, password: string) {
-    const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [userName.toLowerCase()])
+    const [rows, fields] = await mysqlPool.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [userName.toLowerCase()])
     if (rows.length === 0) return false
     const sqlPassword = rows[0].password
     return await bcrypt.compare(password, sqlPassword)
@@ -140,7 +139,7 @@ async function addCredentials(userName: string, password: string) {
     if (!userName || !password) return -2
     const sqlPassword = await bcrypt.hash(password, saltRounds)
     try {
-        await mysqlCon.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, sqlPassword, new Date()])
+        await mysqlPool.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, sqlPassword, new Date()])
         return 0
     } catch (err) {
         return (err as any).errno
@@ -192,7 +191,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
         if (Object.hasOwnProperty.call(users[userId], text)) return
         const oldName = users[userId].name
         try {
-            await mysqlCon.execute("UPDATE users SET user_name_lowercase = ?, user_name = ? WHERE id = ?;", [text.toLowerCase(), text, userId])
+            await mysqlPool.execute("UPDATE users SET user_name_lowercase = ?, user_name = ? WHERE id = ?;", [text.toLowerCase(), text, userId])
             users[userId].name = text
             name = text
             sendUserList()
@@ -216,7 +215,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     }
 
     async function getRegisteredUsers(): Promise<{ user_name: string, id: string, last_activity: Date }[]> {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT user_name, id, last_activity FROM users;") /* FIXME */
+        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT user_name, id, last_activity FROM users;") /* FIXME */
         return rows
     }
 
@@ -295,7 +294,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
         }
     }
 
-    mysqlCon.execute<any[]>("SELECT bkg_color FROM users WHERE id = ?", [userId])
+    mysqlPool.execute<any[]>("SELECT bkg_color FROM users WHERE id = ?", [userId])
         .then(([rows, fields]) => {
             for (const socket of [...users[userId].cons.values()].map(x => x.conSocket)) {
                 users[userId].send(socket, {
@@ -362,7 +361,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
             const date = new Date()
             users[userId].cons.set(myConNum, { conSocket: con, currentIP: ipinfo, online: data.online, lastActivity: date })
             if (!data.online) {
-                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE id = ?;", [date, userId])
+                mysqlPool.execute("UPDATE users SET last_activity = ? WHERE id = ?;", [date, userId])
                     .catch(() => console.log("efe"))
             }
             sendUserList()
@@ -396,7 +395,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
                 }
             }
         } else if (data.type === "bkgColor") {
-            mysqlCon.execute("UPDATE users SET bkg_color = ? WHERE id = ?;", [data.color, userId])
+            mysqlPool.execute("UPDATE users SET bkg_color = ? WHERE id = ?;", [data.color, userId])
                 .catch(() => console.log("efe"))
             for (const socket of [...users[userId].cons.values()].map(x => x.conSocket).filter(x => x !== con)) {
                 users[userId].send(socket, {
@@ -410,18 +409,18 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
             deleteAccount(data.password)
         } else if (data.type === "deleteAccountYes") {
             [...users[userId].cons.values()].map(x => x.conSocket).forEach(x => x.close())
-            mysqlCon.execute("DELETE FROM users WHERE id = ?;", [userId])
+            mysqlPool.execute("DELETE FROM users WHERE id = ?;", [userId])
         } else {
             throw Error("owo")
         }
     })
 
     async function changePassword(oldPwd: string, newPwd: string) {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId])
+        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId])
         const sqlPassword = rows[0].password
         if (await bcrypt.compare(oldPwd, sqlPassword)) {
             const newHash = await bcrypt.hash(newPwd, saltRounds)
-            mysqlCon.execute("UPDATE users SET password = ? WHERE id = ?;", [newHash, userId])
+            mysqlPool.execute("UPDATE users SET password = ? WHERE id = ?;", [newHash, userId])
             connectionData.send(con, {
                 type: "password",
                 ok: true
@@ -435,7 +434,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     }
 
     async function deleteAccount(password: string) {
-        const [rows, fields] = await mysqlCon.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId])
+        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT password FROM users WHERE id = ? LIMIT 1;", [userId])
         const sqlPassword = rows[0].password
         if (await bcrypt.compare(password, sqlPassword)) {
             connectionData.send(con, {
@@ -467,7 +466,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
         con.off("error", close)
         if (users[userId].cons.size === 1) {
             if (users[userId].cons.get(myConNum)?.online) {
-                mysqlCon.execute("UPDATE users SET last_activity = ? WHERE id = ?;", [new Date(), userId])
+                mysqlPool.execute("UPDATE users SET last_activity = ? WHERE id = ?;", [new Date(), userId])
                     .catch(() => console.log("efe"))
             }
             console.log(`User ${name} has left. :(`)
