@@ -48,7 +48,7 @@ export function formatUserLocation(region?: string, countryCode?: string, bogon?
 export const formatRelativeDate = (lastActivityDate: Date, currentDate: Date) => (
     lastActivityDate.getFullYear() !== currentDate.getFullYear() ?
     lastActivityDate.toLocaleDateString("en-IE", { month: "short", year: "numeric" }) :
-    lastActivityDate.getDay() !== currentDate.getDay() ?
+    lastActivityDate.getMonth() !== currentDate.getMonth() || lastActivityDate.getDate() !== currentDate.getDate() ?
         lastActivityDate.toLocaleDateString("en-IE", { day: "numeric", month: "short" }) :
         formatDate(lastActivityDate)
 )
