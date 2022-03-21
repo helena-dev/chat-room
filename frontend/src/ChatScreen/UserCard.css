@@ -31,6 +31,7 @@
     height: 15px;
     border-radius: 10px;
     border: 1px solid rgb(42, 47, 50);
+    flex: none;
 }
 
 .user-name {
