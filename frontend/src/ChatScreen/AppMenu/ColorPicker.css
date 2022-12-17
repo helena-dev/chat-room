@@ -12,7 +12,11 @@
     border-radius: 7.5px;
     width: 25px;
     height: 25px;
-    align-self: center;
+}
+
+.colorPicker {
+    visibility: hidden;
+    position: absolute;
 }
 
 .colorField {
