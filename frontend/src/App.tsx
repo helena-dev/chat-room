@@ -1,5 +1,5 @@
 import React from "react"
-import { BackMessage, FrontMessage, LoginResponse, SignupResponse } from "../../messages"
+import { BackMessage, FrontMessage, LoginResponse, SignupResponse, TokenAuthResponse } from "../../messages"
 import "./App.css"
 import ChatScreen from "./ChatScreen/ChatScreen"
 import ErrorScreen, { ErrorReason } from "./SessionScreens/ErrorScreen"
@@ -45,7 +45,15 @@ export default class App extends React.Component<{}, AppState> {
         this.closeCon()
         this.con = new WebSocket(process.env.REACT_APP_WEBSOCKET_URL!)
         this.setState({ phase: "loading" })
-        this.con.onopen = () => this.setState({ phase: "login" })
+        this.con.onopen = () => {
+            const token = localStorage.getItem('token')
+            if (token) {
+                this.send({
+                    type: "auth",
+                    token: token,
+                })
+            } else this.setState({ phase: "login" })
+        }
         this.con.onclose = () => {
             const errorReason = this.state.phase === "loading" ? "connectionFailed" : "disconnected"
             this.setState({ phase: "error", errorReason })
@@ -67,10 +75,21 @@ export default class App extends React.Component<{}, AppState> {
     receive(event: MessageEvent): void {
         const data: BackMessage = JSON.parse(event.data)
         const { phase } = this.state
-        if (phase === "login") {
+        if (phase === "loading") {
+            this.recieveAuth(data as TokenAuthResponse)
+        } else if (phase === "login") {
             this.receiveResponse(data as LoginResponse | SignupResponse)
         } else if (phase === "connected") {
             this.chatScreenRef.current?.receive(data)
+        }
+    }
+
+    recieveAuth(data: TokenAuthResponse) {
+        if (data.ok) {
+            this.cancelTimeout()
+            this.setState({ phase: "connected" })
+        } else {
+            this.setState({ phase: "login" })
         }
     }
 
@@ -78,6 +97,7 @@ export default class App extends React.Component<{}, AppState> {
         if (data.ok) {
             this.cancelTimeout()
             this.setState({ phase: "connected" })
+            data.token && localStorage.setItem('token', data.token);
         } else if (!data.ok) {
             if (data.type === "signup") {
                 if (data.err === 1062) {
@@ -121,6 +141,7 @@ export default class App extends React.Component<{}, AppState> {
         }
 
         const logout = () => {
+            localStorage.removeItem("token")
             this.newCon()
         }
 

@@ -10,6 +10,7 @@ export type BackMessage =
     EditMessage |
     LoginResponse |
     SignupResponse |
+    TokenAuthResponse |
     UpdateBkgColor |
     UpdatePassword |
     DeleteConfirmation |
@@ -24,6 +25,7 @@ export type FrontMessage =
     EditMessage |
     LoginRequest |
     SignupRequest |
+    TokenAuthRequest |
     UpdateBkgColor |
     PasswordChange |
     DeleteAccount |
@@ -144,6 +146,7 @@ export interface LoginRequest {
 export interface LoginResponse {
     type: "login";
     ok: boolean;
+    token?: string;
 }
 
 export interface SignupRequest {
@@ -157,6 +160,17 @@ export interface SignupResponse {
     type: "signup";
     ok: boolean;
     err: number;
+    token?: string;
+}
+
+export interface TokenAuthRequest {
+    type: "auth";
+    token: string;
+}
+
+export interface TokenAuthResponse {
+    type: "auth";
+    ok: boolean;
 }
 
 export interface UpdateBkgColor {

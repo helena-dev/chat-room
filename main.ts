@@ -1,11 +1,12 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { RawData, WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
-import type { BackMessage, FrontMessage, LoginRequest, ReceivedMessage, SignupRequest } from "./messages"
+import type { BackMessage, FrontMessage, LoginRequest, ReceivedMessage, SignupRequest, TokenAuthRequest } from "./messages"
 import { Pool, createPool } from 'mysql2/promise'
 import { createServer } from "http"
 import got from "got"
 import bcrypt from "bcryptjs"
+import { v4 as uuidv4 } from 'uuid';
 
 const { RECAPTCHA_PRIVATEKEY } = process.env
 if (!RECAPTCHA_PRIVATEKEY) throw "Recaptcha private key needed.\r\n"
@@ -63,23 +64,20 @@ server.on("connection", (con, request) => {
         con.send(JSON.stringify(data))
     }
 
-    const getUserId = async (name: string): Promise<number> => {
-        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT id FROM users WHERE user_name_lowercase = ? LIMIT 1;", [name.toLowerCase()])
-        return rows[0].id
-    }
-
     const handleLogin = async (data: LoginRequest) => {
-        const valid = await checkCredentials(data.userName, data.password)
+        const user_id = await checkCredentials(data.userName, data.password)
+        const valid = user_id !== undefined
         const connectionIpInfo = await ipinfoPromise
+        const token = valid ? await handleTokenCreation(data.userName, user_id) : undefined
         send({
             type: "login",
             ok: valid,
+            token,
         })
         if (valid && !completed) {
-            const id = await getUserId(data.userName)
             completed = true
             con.off("message", messageHandler)
-            handlePostLogin(con, connectionIpInfo, data.userName, id)
+            handlePostLogin(con, connectionIpInfo, data.userName, user_id)
         }
     }
     const handleSignup = async (data: SignupRequest) => {
@@ -100,18 +98,34 @@ server.on("connection", (con, request) => {
             return
         }
 
-        const code = await addCredentials(data.userName, data.password)
+        const [code, user_id] = await addCredentials(data.userName, data.password)
+        const valid = user_id !== undefined
         const connectionIpInfo = await ipinfoPromise
+        const token = valid ? await handleTokenCreation(data.userName, user_id) : undefined
         send({
             type: "signup",
-            ok: !code,
+            ok: valid,
             err: code,
+            token: token,
         })
-        if (code === 0 && !completed) {
-            const id = await getUserId(data.userName)
+        if (valid && !completed) {
             completed = true
             con.off("message", messageHandler)
-            handlePostLogin(con, connectionIpInfo, data.userName, id)
+            handlePostLogin(con, connectionIpInfo, data.userName, user_id)
+        }
+    }
+
+    const handleTokenAuth = async (data: TokenAuthRequest) => {
+        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT user_id, user_name FROM tokens t JOIN users u ON u.id = user_id WHERE token = ? LIMIT 1;", [data.token])
+        send({
+            type: "auth",
+            ok: Boolean(rows[0]),
+        })
+        if (rows[0] && !completed) {
+            const connectionIpInfo = await ipinfoPromise
+            completed = true
+            con.off("message", messageHandler)
+            handlePostLogin(con, connectionIpInfo, rows[0].user_name, rows[0].user_id)
         }
     }
 
@@ -121,6 +135,8 @@ server.on("connection", (con, request) => {
             handleLogin(data)
         } else if (data.type === "signup") {
             handleSignup(data)
+        } else if (data.type === "auth") {
+            handleTokenAuth(data)
         } else {
             con.close()
         }
@@ -128,21 +144,34 @@ server.on("connection", (con, request) => {
     con.on("message", messageHandler)
 })
 
-async function checkCredentials(userName: string, password: string) {
-    const [rows, fields] = await mysqlPool.execute<any[]>("SELECT password FROM users WHERE user_name_lowercase = ? LIMIT 1;", [userName.toLowerCase()])
-    if (rows.length === 0) return false
+async function checkCredentials(userName: string, password: string): Promise<number | undefined> {
+    const [rows, fields] = await mysqlPool.execute<any[]>("SELECT password, id FROM users WHERE user_name_lowercase = ? LIMIT 1;", [userName.toLowerCase()])
+    if (rows.length === 0) return undefined
     const sqlPassword = rows[0].password
-    return await bcrypt.compare(password, sqlPassword)
+    return (await bcrypt.compare(password, sqlPassword)) ? rows[0].id : undefined
 }
 
-async function addCredentials(userName: string, password: string) {
-    if (!userName || !password) return -2
+async function addCredentials(userName: string, password: string): Promise<[number, number | undefined]> {
+    if (!userName || !password) return [-2, undefined]
     const sqlPassword = await bcrypt.hash(password, saltRounds)
     try {
-        await mysqlPool.execute("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, sqlPassword, new Date()])
-        return 0
-    } catch (err) {
-        return (err as any).errno
+        const [rows] = await mysqlPool.execute<any>("INSERT INTO users (user_name_lowercase, user_name, bkg_color, password, last_activity) VALUES (?, ?, ?, ?, ?);", [userName.toLowerCase(), userName, 857112, sqlPassword, new Date()])
+        return [0, rows.insertId]
+    } catch (err: any) {
+        return [err.errno, undefined]
+    }
+}
+
+async function handleTokenCreation(userName: string, user_id: number): Promise<string> {
+    const token = uuidv4()
+    try {
+        await mysqlPool.execute("INSERT INTO tokens (token, user_id) VALUES (?, ?);", [token, user_id])
+        return token
+    } catch (err: any) {
+        if (err.code === "ER_DUP_ENTRY") {
+            return await handleTokenCreation(userName, user_id)
+        }
+        throw err
     }
 }
 
