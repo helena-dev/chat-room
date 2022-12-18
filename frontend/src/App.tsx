@@ -52,7 +52,7 @@ export default class App extends React.Component<{}, AppState> {
                     type: "auth",
                     token: token,
                 })
-            } else this.setState({ phase: "login" })
+            } else this.setState({ phase: "login", signup: false, failed: false })
         }
         this.con.onclose = () => {
             const errorReason = this.state.phase === "loading" ? "connectionFailed" : "disconnected"
