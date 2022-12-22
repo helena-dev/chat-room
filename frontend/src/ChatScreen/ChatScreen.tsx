@@ -341,6 +341,10 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             })
             this.pseudoId--
         }
+        const newMap = new Map(this.state.typingUsers)
+        clearTimeout(newMap.get(this.state.yourId)!)
+        newMap.delete(this.state.yourId)
+        this.setState({ typingUsers: newMap })
         textInput.value = ""
         textInput.style.height = "auto"
         this.setState({ replyMsg: undefined, image: undefined })
