@@ -73,6 +73,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
     nickInputRef = React.createRef<HTMLInputElement>()
+    scrollButtonRef = React.createRef<ScrollButton>()
 
     componentDidMount() {
         this.bell = new Audio("/bell.oga")
@@ -292,14 +293,20 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         cssColor: `white`, own: this.state.yourId === msg.from_id
     })
 
+    scrollToBottom() {
+        const textField = this.textFieldRef.current!
+        textField.scrollTop = textField.scrollHeight - textField.clientHeight
+    }
+
     receiveMessageList(data: BasicMessage[]) {
-        this.setState({ messages: data.map(x => this.mutateSQLMessage(x)) })
+        this.setState({ messages: data.map(x => this.mutateSQLMessage(x)) },
+            this.scrollToBottom
+        )
     }
 
     sendMessage(): void {
         const textInput = this.textInputRef.current!
-        const textField = this.textFieldRef.current!
-        textField.scrollTop = textField.scrollHeight - textField.clientHeight
+        this.scrollToBottom()
         textInput.focus()
         const text = textInput.value.trim()
         if (text && this.state.editMsg) {
@@ -494,15 +501,14 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         }
 
         const onScrollButtonClick = () => {
-            const textField = this.textFieldRef.current!
-            textField.scrollTop = textField.scrollHeight - textField.clientHeight
+            this.scrollToBottom()
             this.focusWOKeyboard()
         }
 
         const textField = (
             <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()} style={{ backgroundColor: "rgb(" + currentColor + ")" }}>
                 {renderedMessages()}
-                <ScrollButton onAction={onScrollButtonClick} scroll={textFieldScroll} />
+                <ScrollButton ref={this.scrollButtonRef} onAction={onScrollButtonClick} scroll={textFieldScroll} />
             </div>
         )
 
