@@ -1,4 +1,4 @@
-CREATE TABLE `users` (
+CREATE TABLE IF NOT EXISTS `users`(
   `id` int unsigned NOT NULL AUTO_INCREMENT,
   `user_name_lowercase` varchar(20) NOT NULL,
   `user_name` varchar(20) NOT NULL,
@@ -9,14 +9,14 @@ CREATE TABLE `users` (
   UNIQUE KEY `user_name_lowercase_UNIQUE` (`user_name_lowercase`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE `tokens` (
+CREATE TABLE IF NOT EXISTS `tokens`(
   `token` varchar(36) NOT NULL,
   `user_id` int unsigned NOT NULL,
   PRIMARY KEY (`token`),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
-CREATE TABLE `messages` (
+CREATE TABLE IF NOT EXISTS `messages`(
   `msgNum` int unsigned NOT NULL AUTO_INCREMENT,
   `text` text,
   `image` mediumtext,
