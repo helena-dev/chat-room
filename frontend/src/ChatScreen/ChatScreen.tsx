@@ -19,10 +19,11 @@ import SettingsMenu from "./AppMenu/SettingsMenu"
 
 interface ChatScreenState {
     currentNick?: string,
+    yourId: number,
     currentUserList?: UserList,
     messages: (ReceivedMessage | Toast)[],
     pseudoMessages: ReceivedMessage[],
-    typingUsers: Map<string, NodeJS.Timeout>,
+    typingUsers: Map<number, NodeJS.Timeout>,
     showPanel: boolean,
     windowWidth: number,
     menuData?: MenuData,
@@ -67,7 +68,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     wrongPwdTimeout: any
     changedPwdTimeout: any
 
-    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false, changedPwd: false, wrongPwd: false, deleteConfirmation: false, ownCons: [] }
+    state: ChatScreenState = { messages: [], typingUsers: new Map(), showPanel: false, windowWidth: window.innerWidth, textFieldScroll: 0, pseudoMessages: [], showAppMenu: false, currentColor: [13, 20, 24], settingsMenu: false, changedPwd: false, wrongPwd: false, deleteConfirmation: false, ownCons: [], yourId: -1 }
 
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
@@ -177,8 +178,8 @@ class ChatScreen extends React.Component<ChatScreenProps> {
 
     receiveUserList(data: UserList): void {
         if (!this.state.currentNick) {
-            const yourUser = data.users.filter(x => x.own).map(x => x.name)[0]
-            this.setState({ currentNick: yourUser })
+            const { name, id } = data.users.find(x => x.own)!
+            this.setState({ currentNick: name, yourId: id })
         }
         this.setState({ currentUserList: data })
     }
@@ -189,9 +190,9 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         }
         this.setState({ messages: this.state.messages.concat([data]) })
         const newMap = new Map(this.state.typingUsers)
-        if (newMap.has(data.user_name)) {
-            clearTimeout(newMap.get(data.user_name)!)
-            newMap.delete(data.user_name)
+        if (newMap.has(data.from_id)) {
+            clearTimeout(newMap.get(data.from_id)!)
+            newMap.delete(data.from_id)
             this.setState({ typingUsers: newMap })
         }
     }
@@ -288,7 +289,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
 
     mutateSQLMessage = (msg: BasicMessage): ReceivedMessage => ({
         ...msg, text: msg.text || "", type: "message", edited: Boolean(msg.edited),
-        cssColor: `white`, own: this.state.currentNick === msg.user_name
+        cssColor: `white`, own: this.state.yourId === msg.from_id
     })
 
     receiveMessageList(data: BasicMessage[]) {
@@ -323,6 +324,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                 image: this.state.image,
                 own: true,
                 user_name: this.state.currentNick!,
+                from_id: this.state.yourId,
                 date: new Date(),
                 cssColor: "hsl(0, 100%, 50%)",
                 msgNum: this.pseudoId,
@@ -358,7 +360,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     }
 
     render() {
-        const { currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu, changedPwd, wrongPwd, deleteConfirmation, ownCons } = this.state
+        const { yourId, currentNick, currentUserList, messages, typingUsers, showPanel, windowWidth, menuData, replyMsg, image, textFieldScroll, bigImage, pseudoMessages, showAppMenu, currentColor, editMsg, settingsMenu, changedPwd, wrongPwd, deleteConfirmation, ownCons } = this.state
 
         const onNickSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
             const nickInput = this.nickInputRef.current!
@@ -461,7 +463,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
 
         const renderMsg = (data: ReceivedMessage, i: number) => {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
-                msg.type === "message" && data.user_name === msg.user_name
+                msg.type === "message" && data.from_id === msg.from_id
             const isFollowup = (i > 0 && doesMatch(this.allMessages[i - 1]))
             const reply = this.allMessages.find(x => (x.msgNum === data.replyNum)) as ReceivedMessage | undefined
             return <Message
@@ -620,7 +622,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         const topBarText = !currentUserList ? "Loading..." : ((userList, typingList) => {
             const connectedUsers = userList.users.filter(user => user.connected)
             const funcMap = new Map(typingList)
-            if (funcMap.has(currentNick!)) funcMap.delete(currentNick!)
+            if (funcMap.has(yourId)) funcMap.delete(yourId)
             const typingNum = funcMap.size
             if (!typingNum) {
                 const userNum = connectedUsers.length

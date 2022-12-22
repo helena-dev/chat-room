@@ -6,7 +6,7 @@ import UserCard from "./UserCard"
 export interface SidePanelProps {
     windowWidth: number;
     currentUserList?: UserList;
-    typingUsers: Map<string, NodeJS.Timeout>
+    typingUsers: Map<number, NodeJS.Timeout>
 }
 
 export default class SidePanel extends React.Component<SidePanelProps> {
@@ -30,7 +30,7 @@ export default class SidePanel extends React.Component<SidePanelProps> {
         }
         const users = Array.from(currentUserList?.users || []).sort(comparator)
         const cards = users.map(user =>
-            <UserCard user={user} typingStatus={typingUsers.has(user.name)} key={user.name} />)
+            <UserCard user={user} typingStatus={typingUsers.has(user.id)} key={user.id} />)
         return (
             <div className={"sidePanelContainer" + size}>
                 <div className={"sidePanel" + size}>

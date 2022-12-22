@@ -23,6 +23,7 @@ if (!process.env.IPINFO_TOKEN) {
 }
 
 interface ConnectionData {
+    id: number
     name: string
     cons: Map<number, { conSocket: WebSocket, currentIP: IPinfo, online: boolean, lastActivity: Date }>
     colorNum: number
@@ -68,7 +69,7 @@ server.on("connection", (con, request) => {
         const user_id = await checkCredentials(data.userName, data.password)
         const valid = user_id !== undefined
         const connectionIpInfo = await ipinfoPromise
-        const token = valid ? await handleTokenCreation(data.userName, user_id) : undefined
+        const token = valid ? await handleTokenCreation(user_id) : undefined
         send({
             type: "login",
             ok: valid,
@@ -101,7 +102,7 @@ server.on("connection", (con, request) => {
         const [code, user_id] = await addCredentials(data.userName, data.password)
         const valid = user_id !== undefined
         const connectionIpInfo = await ipinfoPromise
-        const token = valid ? await handleTokenCreation(data.userName, user_id) : undefined
+        const token = valid ? await handleTokenCreation(user_id) : undefined
         send({
             type: "signup",
             ok: valid,
@@ -162,14 +163,14 @@ async function addCredentials(userName: string, password: string): Promise<[numb
     }
 }
 
-async function handleTokenCreation(userName: string, user_id: number): Promise<string> {
+async function handleTokenCreation(user_id: number): Promise<string> {
     const token = uuidv4()
     try {
         await mysqlPool.execute("INSERT INTO tokens (token, user_id) VALUES (?, ?);", [token, user_id])
         return token
     } catch (err: any) {
         if (err.code === "ER_DUP_ENTRY") {
-            return await handleTokenCreation(userName, user_id)
+            return await handleTokenCreation(user_id)
         }
         throw err
     }
@@ -180,7 +181,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     conNum++
 
     async function sendMessages() {
-        const [rows] = await mysqlPool.execute<any[]>("SELECT m.msgNum, m.text, m.image, m.date, m.replyNum, m.edited, u.user_name FROM messages m LEFT JOIN users u ON u.id = `from` ORDER BY m.msgNum ASC;")
+        const [rows] = await mysqlPool.execute<any[]>("SELECT m.from as from_id, m.msgNum, m.text, m.image, m.date, m.replyNum, m.edited, u.user_name FROM messages m LEFT JOIN users u ON u.id = `from` ORDER BY m.msgNum ASC;")
         users[userId].send(con, {
             type: "messageList",
             messages: rows,
@@ -197,6 +198,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     }
 
     const connectionData: ConnectionData = {
+        id: userId,
         name,
         cons: new Map(),
         colorNum: findNum(colorNumSet),
@@ -233,14 +235,14 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
             name = text
             sendUserList()
             const id = generateMsgId()
-            for (const [targetUserId, targetConnectionData] of Object.entries(users)) {
+            for (const targetConnectionData of Object.values(users)) {
                 for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
                     targetConnectionData.send(socket, {
                         type: "toast",
                         toast: "nickChange",
                         oldName,
                         newName: name,
-                        own: parseInt(targetUserId) === userId,
+                        own: targetConnectionData.id === userId,
                         msgNum: id,
                     })
                 }
@@ -251,29 +253,30 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
         }
     }
 
-    async function getRegisteredUsers(): Promise<{ user_name: string, id: string, last_activity: Date }[]> {
-        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT user_name, id, last_activity FROM users;") /* FIXME */
+    async function getRegisteredUsers(): Promise<{ user_name: string, id: number, last_activity: Date }[]> {
+        const [rows, fields] = await mysqlPool.execute<any[]>("SELECT user_name, id, last_activity FROM users;")
         return rows
     }
 
     async function sendUserList() {
         sendOwnCons()
         const registeredUsers = await getRegisteredUsers()
-        for (const [targetUser, targetConnectionData] of Object.entries(users)) {
+        for (const targetConnectionData of Object.values(users)) {
             for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
                 targetConnectionData.send(socket, {
                     type: "userList",
                     users: registeredUsers.map(user => {
                         const connected = Object.hasOwnProperty.call(users, user.id)
                         const userInfo = {
+                            id: user.id,
                             name: user.user_name,
                             connected,
-                            own: `${user.id}` === targetUser
+                            own: user.id === targetConnectionData.id
                         }
                         if (connected) {
-                            const userData = users[`${user.id}`]
+                            const userData = users[user.id]
                             const lastActivity = [...userData.cons.values()].map(x => x.lastActivity).sort().slice(-1)[0].getTime()
-                            const numLastActivity = (socket === con && `${userId}` === user.id) ? myConNum : [...userData.cons.entries()].filter(x => x[1].lastActivity.getTime() === lastActivity)[0][0]
+                            const numLastActivity = (socket === con && userId === user.id) ? myConNum : [...userData.cons.entries()].filter(x => x[1].lastActivity.getTime() === lastActivity)[0][0]
                             const { region, countryCode, city } = userData.cons.get(numLastActivity)?.currentIP || {}
                             const { bogon } = (userData.cons.get(numLastActivity)?.currentIP as any || {})
                             const { cssColor } = userData
@@ -298,7 +301,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
 
     function userNumChange(sign: "plus" | "minus") {
         const id = generateMsgId()
-        for (const [targetUserId, targetConnectionData] of Object.entries(users)) {
+        for (const targetConnectionData of Object.values(users)) {
             const sockets = [...targetConnectionData.cons.values()].map(x => x.conSocket)
             for (const socket of sockets) {
                 targetConnectionData.send(socket, {
@@ -306,7 +309,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
                     toast: "userChange",
                     sign,
                     name,
-                    own: parseInt(targetUserId) === userId,
+                    own: targetConnectionData.id === userId,
                     msgNum: id,
                 })
             }
@@ -364,6 +367,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
                 image: data.image,
                 own: false,
                 user_name: name,
+                from_id: userId,
                 date: new Date(),
                 cssColor: users[userId].cssColor,
                 msgNum: -1,
@@ -372,15 +376,15 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
             }
             const id = await storeMessage(messageData)
             messageData.msgNum = id
-            for (const [targetUserId, targetConnectionData] of Object.entries(users)) {
-                if (parseInt(targetUserId) !== userId) {
+            for (const targetConnectionData of Object.values(users)) {
+                if (targetConnectionData.id !== userId) {
                     for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
                         targetConnectionData.send(socket, {
                             ...messageData,
                             own: false,
                         })
                     }
-                } else if (parseInt(targetUserId) === userId) {
+                } else if (targetConnectionData.id === userId) {
                     const sockets = [...targetConnectionData.cons.values()].map(x => x.conSocket)
                     for (const socket of sockets) {
                         if (socket === con) {
@@ -415,7 +419,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
                 for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
                     targetConnectionData.send(socket, {
                         type: "typing",
-                        from: name,
+                        from: userId,
                     })
                 }
             }

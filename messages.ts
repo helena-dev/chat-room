@@ -38,6 +38,7 @@ export interface UserList {
 }
 
 export interface UserInfo {
+    id: number;
     name: string;
     lastActivity: number;
     connected: boolean;
@@ -87,6 +88,7 @@ export interface BasicMessage {
     msgNum: number;
     replyNum?: number;
     edited: boolean;
+    from_id: number;
 }
 
 export interface ReceivedMessage extends BasicMessage{
@@ -124,7 +126,7 @@ export interface IsTyping {
 
 export interface UserTyping {
     type: "typing";
-    from: string;
+    from: number;
 }
 
 export interface DeleteMessage {
