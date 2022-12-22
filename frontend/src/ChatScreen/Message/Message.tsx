@@ -48,7 +48,7 @@ export default class Message extends React.Component<MessageProps> {
             <div className={containerClass}>
                 <div ref={this.messageRef} className={msgClass} style={{ maxWidth: imageWidth }} id={data.msgNum.toString()}>
                     {(!data.own && !followup) ?
-                        <span className="message-user" style={{ color: data.cssColor }}>{data.from}</span> :
+                        <span className="message-user" style={{ color: data.cssColor }}>{data.user_name ?? "[Deleted User]"}</span> :
                         null}
                     <button className="msgMenuButton" name="msgMenuButton" style={{ opacity }} type="button"
                         onClick={() => onMenu(this.messageRef.current!)}

@@ -3,7 +3,7 @@ import { assertUnreachable, rgbToHex, hexToRgb } from "../utils"
 import Icon from "@mdi/react"
 import { mdiClose, mdiPaperclip, mdiSend } from "@mdi/js"
 import "./ChatScreen.css"
-import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor, UpdatePassword, Connection, OwnConnections } from "../../../messages"
+import type { BackMessage, FrontMessage, UserList, ReceivedMessage, Toast, UserTyping, DeleteMessage, AckMessage, EditMessage, UpdateBkgColor, UpdatePassword, Connection, OwnConnections, BasicMessage } from "../../../messages"
 import ToastComponent from "./Message/Toast"
 import Message from "./Message/Message"
 import ReplyMessageComponent from "./Message/ReplyMessage"
@@ -147,6 +147,8 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             this.receiveDeleteConfirmation()
         } else if (data.type === "ownCons") {
             this.receiveOwnCons(data)
+        } else if (data.type === "messageList") {
+            this.receiveMessageList(data.messages)
         } else {
             assertUnreachable()
         }
@@ -160,7 +162,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                 tag: "msg",
             }
             try {
-                new Notification(`${data.from}`, options)
+                new Notification(`${data.user_name}`, options)
                 return
             } catch (error) {
                 if (!(error instanceof TypeError)) {
@@ -187,9 +189,9 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         }
         this.setState({ messages: this.state.messages.concat([data]) })
         const newMap = new Map(this.state.typingUsers)
-        if (newMap.has(data.from)) {
-            clearTimeout(newMap.get(data.from)!)
-            newMap.delete(data.from)
+        if (newMap.has(data.user_name)) {
+            clearTimeout(newMap.get(data.user_name)!)
+            newMap.delete(data.user_name)
             this.setState({ typingUsers: newMap })
         }
     }
@@ -284,6 +286,15 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         this.setState({ ownCons: data.connections })
     }
 
+    mutateSQLMessage = (msg: BasicMessage): ReceivedMessage => ({
+        ...msg, text: msg.text || "", type: "message", edited: Boolean(msg.edited),
+        cssColor: `white`, own: this.state.currentNick === msg.user_name
+    })
+
+    receiveMessageList(data: BasicMessage[]) {
+        this.setState({ messages: data.map(x => this.mutateSQLMessage(x)) })
+    }
+
     sendMessage(): void {
         const textInput = this.textInputRef.current!
         const textField = this.textFieldRef.current!
@@ -311,7 +322,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                 text: text,
                 image: this.state.image,
                 own: true,
-                from: this.state.currentNick!,
+                user_name: this.state.currentNick!,
                 date: new Date(),
                 cssColor: "hsl(0, 100%, 50%)",
                 msgNum: this.pseudoId,
@@ -450,7 +461,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
 
         const renderMsg = (data: ReceivedMessage, i: number) => {
             const doesMatch = (msg: ReceivedMessage | Toast) =>
-                msg.type === "message" && data.from === msg.from
+                msg.type === "message" && data.user_name === msg.user_name
             const isFollowup = (i > 0 && doesMatch(this.allMessages[i - 1]))
             const reply = this.allMessages.find(x => (x.msgNum === data.replyNum)) as ReceivedMessage | undefined
             return <Message
@@ -719,7 +730,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                     onColorSubmit={onColorSubmit} currentColor={currentColor}
                     changePassword={changePassword} changedPwd={changedPwd} wrongPwd={wrongPwd}
                     onDeleteAccountSubmit={onDeleteAccountSubmit} deleteConfirmation={deleteConfirmation}
-                    deleteConfirmationHandler={deleteConfirmationHandler} connections={ownCons}/> : undefined}
+                    deleteConfirmationHandler={deleteConfirmationHandler} connections={ownCons} /> : undefined}
                 {bigImage ? <BigImage image={bigImage} onAction={disappearBigImage} /> : undefined}
                 {showPanel ? <SidePanel windowWidth={windowWidth} currentUserList={currentUserList} typingUsers={typingUsers} /> : undefined}
                 <div className="app" onClick={disappearAppMenu}>

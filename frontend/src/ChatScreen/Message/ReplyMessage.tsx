@@ -21,7 +21,7 @@ export default class ReplyMessageComponent extends React.Component<ReplyMessageP
         }
         return (
             <div className="replyMessage" onClick={() => { if (replyClick) replyClick(data.msgNum) }} style={{ cursor, borderColor: data.cssColor, maxWidth: imageWidth, width }}>
-                <span className="reply-user" style={{ color: data.cssColor }}>{data.from}</span>
+                <span className="reply-user" style={{ color: data.cssColor }}>{data.user_name}</span>
                 <div className="reply-body" style={{ maxHeight: imageHeight }}>
                     <span className="reply-image">
                         {data.image &&

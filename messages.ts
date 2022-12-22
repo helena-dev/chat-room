@@ -14,7 +14,8 @@ export type BackMessage =
     UpdateBkgColor |
     UpdatePassword |
     DeleteConfirmation |
-    OwnConnections
+    OwnConnections |
+    MessageList
 
 export type FrontMessage =
     SentMessage |
@@ -78,17 +79,25 @@ export interface PunishToast extends ToastBase {
     text: string;
 }
 
-export interface ReceivedMessage {
-    type: "message";
+export interface BasicMessage {
     text: string;
     image?: string;
-    own: boolean;
-    from: string;
+    user_name: string;
     date: Date;
-    cssColor: string;
     msgNum: number;
     replyNum?: number;
     edited: boolean;
+}
+
+export interface ReceivedMessage extends BasicMessage{
+    type: "message";
+    cssColor: string;
+    own: boolean;
+}
+
+export interface MessageList {
+    type: "messageList";
+    messages: BasicMessage[]
 }
 
 export interface SentMessage {

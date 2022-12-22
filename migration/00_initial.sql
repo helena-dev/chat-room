@@ -12,6 +12,19 @@ CREATE TABLE `users` (
 CREATE TABLE `tokens` (
   `token` varchar(36) NOT NULL,
   `user_id` int unsigned NOT NULL,
-  PRIMARY KEY (`token`)
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  PRIMARY KEY (`token`),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+CREATE TABLE `messages` (
+  `msgNum` int unsigned NOT NULL AUTO_INCREMENT,
+  `text` text,
+  `image` mediumtext,
+  `from` int unsigned,
+  `date` timestamp NOT NULL,
+  `replyNum` int unsigned,
+  `edited` boolean NOT NULL DEFAULT FALSE,
+  PRIMARY KEY (`msgNum`),
+  FOREIGN KEY (`from`) REFERENCES users(id) ON DELETE SET NULL,
+  FOREIGN KEY (`replyNum`) REFERENCES messages(msgNum) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;

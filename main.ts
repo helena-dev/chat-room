@@ -1,7 +1,7 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { RawData, WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
-import type { BackMessage, FrontMessage, LoginRequest, ReceivedMessage, SignupRequest, TokenAuthRequest } from "./messages"
+import type { BackMessage, FrontMessage, LoginRequest, MessageList, ReceivedMessage, SignupRequest, TokenAuthRequest } from "./messages"
 import { Pool, createPool } from 'mysql2/promise'
 import { createServer } from "http"
 import got from "got"
@@ -179,6 +179,14 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
     const myConNum = conNum
     conNum++
 
+    async function sendMessages() {
+        const [rows] = await mysqlPool.execute<any[]>("SELECT m.msgNum, m.text, m.image, m.date, m.replyNum, m.edited, u.user_name FROM messages m LEFT JOIN users u ON u.id = `from` ORDER BY m.msgNum ASC;")
+        users[userId].send(con, {
+            type: "messageList",
+            messages: rows,
+        })
+    }
+
     const colorNumSet = new Set(Object.values(users).map(x => x.colorNum))
     function findNum(set: Set<number>) {
         for (let i = 0; true; i++) {
@@ -333,9 +341,16 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
             }
         }, () => console.log("efe"))
     sendUserList()
+        .then(sendMessages)
+
     if (users[userId].cons.size === 1) userNumChange("plus")
 
-    con.on("message", chunk => {
+    async function storeMessage(data: ReceivedMessage) {
+        const [rows] = await mysqlPool.execute<any>("INSERT INTO messages (`text`, `image`, `from`, `date`, `replyNum`, `edited`) VALUES (?, ?, ?, ?, ?, ?);",
+            [data.text ?? null, data.image ?? null, userId, data.date, data.replyNum ?? null, data.edited])
+        return rows.insertId
+    }
+    con.on("message", async (chunk) => {
         const data: FrontMessage = JSON.parse(chunk.toString())
         if (data.type === "message") {
             if (data.text.length > 5000) return punish()
@@ -343,19 +358,20 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
                 const matches = decodeDataURL(data.image)
                 if (!matches || !matches[0].startsWith("image/") || matches[1].length > 30 * 2 ** 20) return punish()
             }
-            const id = generateMsgId()
             const messageData: ReceivedMessage = {
                 type: "message",
                 text: data.text,
                 image: data.image,
                 own: false,
-                from: name,
+                user_name: name,
                 date: new Date(),
                 cssColor: users[userId].cssColor,
-                msgNum: id,
+                msgNum: -1,
                 replyNum: data.replyNum,
                 edited: false,
             }
+            const id = await storeMessage(messageData)
+            messageData.msgNum = id
             for (const [targetUserId, targetConnectionData] of Object.entries(users)) {
                 if (parseInt(targetUserId) !== userId) {
                     for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
@@ -405,6 +421,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
             }
         } else if (data.type === "deleteMsg") {
             const msgId = data.msgNum
+            await mysqlPool.execute("DELETE FROM messages WHERE msgNum = ?;", [msgId])
             for (const targetConnectionData of Object.values(users)) {
                 for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
                     targetConnectionData.send(socket, {
@@ -414,6 +431,7 @@ const handlePostLogin = (con: WebSocket, ipinfo: IPinfo, name: string, userId: n
                 }
             }
         } else if (data.type === "edit") {
+            await mysqlPool.execute("UPDATE messages SET text = ?, edited = ? WHERE msgNum = ?;", [data.text ?? null, true, data.msgNum])
             for (const targetConnectionData of Object.values(users)) {
                 for (const socket of [...targetConnectionData.cons.values()].map(x => x.conSocket)) {
                     targetConnectionData.send(socket, {
