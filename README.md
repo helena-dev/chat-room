@@ -26,6 +26,7 @@ If you want to host your own server, you will have to:
 ## Features
 
 - User accounts
+- Session tokens
 - Text messages
   - Reply
   - Go to reply
