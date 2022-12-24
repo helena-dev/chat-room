@@ -73,6 +73,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
     nickInputRef = React.createRef<HTMLInputElement>()
+    imagePreviewRef = React.createRef<HTMLImageElement>()
 
     componentDidMount() {
         this.bell = new Audio("/bell.oga")
@@ -582,7 +583,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             reader.onload = () => {
                 const imgURL = reader.result as string
                 if (imgURL.startsWith("data:image")) {
-                    this.setState({ image: imgURL })
+                    this.setState({ image: imgURL }, this.imagePreviewRef.current?.decode)
                 }
             }
             if (img.size > 30 * 2 ** 20) {
@@ -608,7 +609,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         const imagePreview = () => {
             return (
                 <div className="messageField-image-container">
-                    <img src={image!} className="messageField-image" decoding="async"></img>
+                    <img ref={this.imagePreviewRef} src={image!} className="messageField-image" decoding="async"></img>
                     <button className="closeImagePreviewButton" type="button" onClick={onClearImage}>
                         <Icon path={mdiClose} size={"1em"} />
                     </button>
