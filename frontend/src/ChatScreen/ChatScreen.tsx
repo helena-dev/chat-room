@@ -73,7 +73,6 @@ class ChatScreen extends React.Component<ChatScreenProps> {
     textInputRef = React.createRef<HTMLTextAreaElement>()
     textFieldRef = React.createRef<HTMLDivElement>()
     nickInputRef = React.createRef<HTMLInputElement>()
-    scrollButtonRef = React.createRef<ScrollButton>()
 
     componentDidMount() {
         this.bell = new Audio("/bell.oga")
@@ -508,7 +507,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         const textField = (
             <div ref={this.textFieldRef} className="textField" onScroll={() => this.recalculateScroll()} style={{ backgroundColor: "rgb(" + currentColor + ")" }}>
                 {renderedMessages()}
-                <ScrollButton ref={this.scrollButtonRef} onAction={onScrollButtonClick} scroll={textFieldScroll} />
+                <ScrollButton onAction={onScrollButtonClick} scroll={textFieldScroll} />
             </div>
         )
 
@@ -541,6 +540,16 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             this.sendMessage()
         }
 
+        const onPaste = async () => {
+            const clipboardItems = await navigator.clipboard.read();
+            for (const type of clipboardItems[0].types) {
+                if (type.startsWith("image")) {
+                    const blob = await clipboardItems[0].getType(type);
+                    handleImage(blob)
+                }
+            }
+        }
+
         const onClearReply = () => {
             this.setState({ replyMsg: undefined })
             const textInput = this.textInputRef.current!
@@ -567,15 +576,8 @@ class ChatScreen extends React.Component<ChatScreenProps> {
             )
         }
 
-        const onImageInput = (event: React.FormEvent<HTMLInputElement>) => {
-            const img = event.currentTarget.files![0]
-            event.currentTarget.value = ""
+        const handleImage = (img: File | Blob) => {
             const reader = new FileReader()
-            if (img.size > 30 * 2 ** 20) {
-                window.alert("The maximum file size is 30 MiB")
-            } else {
-                reader.readAsDataURL(img)
-            }
             reader.onerror = () => this.setState({ image: undefined })
             reader.onload = () => {
                 const imgURL = reader.result as string
@@ -583,7 +585,18 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                     this.setState({ image: imgURL })
                 }
             }
+            if (img.size > 30 * 2 ** 20) {
+                window.alert("The maximum file size is 30 MiB")
+            } else {
+                reader.readAsDataURL(img)
+            }
             this.textInputRef.current!.focus()
+        }
+
+        const onImageInput = (event: React.FormEvent<HTMLInputElement>) => {
+            const img = event.currentTarget.files![0]
+            event.currentTarget.value = ""
+            handleImage(img)
         }
 
         const onClearImage = () => {
@@ -599,7 +612,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                     <button className="closeImagePreviewButton" type="button" onClick={onClearImage}>
                         <Icon path={mdiClose} size={"1em"} />
                     </button>
-                </div>
+                </div >
             )
         }
 
@@ -613,7 +626,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
                 </label>
                 <textarea ref={this.textInputRef} className="textInput" placeholder="Type a message"
                     rows={1} autoFocus maxLength={5000} onInput={(event) => { onTextInput(event); isTyping() }}
-                    onKeyDown={onTextKeyDown}></textarea>
+                    onKeyDown={onTextKeyDown} onPasteCapture={onPaste}></textarea>
                 <button className="sendButton" type="submit">
                     <Icon path={mdiSend} size={"1em"} />
                 </button>
@@ -736,7 +749,7 @@ class ChatScreen extends React.Component<ChatScreenProps> {
         }
 
         return (
-            <div className="container">
+            <div className="container" >
                 {settingsMenu ? <SettingsMenu settingsDisappear={settingsDisappear}
                     currentNick={currentNick} onNickSubmit={onNickSubmit} reference={this.nickInputRef}
                     onColorSubmit={onColorSubmit} currentColor={currentColor}
