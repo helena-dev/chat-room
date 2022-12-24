@@ -33,9 +33,11 @@ If you want to host your own server, you will have to:
   - Edit
   - Delete
   - Markdown
+- Load previous messages on login
 - Notification or sound when a message is received
 - Information messages when someone (dis)connects
 - Images up to 30 MiB
+  - Can attached from storage or pasted
   - Full size view
 - Autoscroll when sending message
 - Scroll to bottom button
