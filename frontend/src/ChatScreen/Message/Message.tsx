@@ -1,11 +1,11 @@
 import { mdiChevronDown, mdiProgressClock, mdiCheck } from "@mdi/js"
 import Icon from "@mdi/react"
-import React, { Children } from "react"
-import Markdown from 'markdown-to-jsx'
+import React from "react"
 import { ReceivedMessage } from "../../../../messages"
 import "./Message.css"
 import ReplyMessageComponent from "./ReplyMessage"
 import { formatDate } from "../../utils"
+import { CustomMarkdown } from "./CustomMarkdown"
 
 export interface MessageProps {
     data: ReceivedMessage;
@@ -64,15 +64,7 @@ export default class Message extends React.Component<MessageProps> {
                         </span>
                         <div className="message-textTime-container">
                             <span className="message-text">
-                                <Markdown options={{
-                                    disableParsingRawHTML: true,
-                                    forceInline: true,
-                                    overrides: {
-                                        a: MessageLink,
-                                    },
-                                }}>
-                                    {data.text}
-                                </Markdown>
+                                <CustomMarkdown text={data.text} />
                             </span>
                             <div className="message-infoContainer">
                                 {data.edited ? <span className="message-edited">edited</span> : undefined}
@@ -91,10 +83,4 @@ export default class Message extends React.Component<MessageProps> {
             </div>
         )
     }
-}
-
-const MessageLink: React.FC = ({ children, ...props }) => {
-    return (
-        <a {...props} target="_blank">{children}</a>
-    )
 }
