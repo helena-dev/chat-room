@@ -8,6 +8,12 @@ export interface CustomMarkdownProps {
 
 export const CustomMarkdown = ({ text }: CustomMarkdownProps) => {
 
+    const MessageLink: React.FC = ({ children, ...props }) => {
+        return (
+            <a {...props} target="_blank" rel="noreferrer">{children}</a>
+        )
+    }
+
     const tryURL = (child: string, matches: RegExpMatchArray[]) => {
         return child.split(" ").map((word, i) => {
             try {
@@ -15,7 +21,7 @@ export const CustomMarkdown = ({ text }: CustomMarkdownProps) => {
                 const parsedUrl = parse(url.hostname)
                 if (!(parsedUrl.isIcann && parsedUrl.domainWithoutSuffix)) throw new Error("Invalid TLD")
                 return <>
-                    <a href={url.href}>{word}</a>
+                    <a href={url.href} target="_blank" rel="noreferrer">{word}</a>
                     {(matches.length && matches[i]) ? <span>{matches[i][0]}</span> : undefined}
                 </>
             } catch {
@@ -43,6 +49,9 @@ export const CustomMarkdown = ({ text }: CustomMarkdownProps) => {
         <Markdown options={{
             disableParsingRawHTML: true,
             forceInline: true,
+            overrides : {
+                a : MessageLink
+            },
             createElement(type, props, children) {
                 if (!(type && props && children)) return <></>
                 if (!["a", "img"].includes(type.toString())) {
