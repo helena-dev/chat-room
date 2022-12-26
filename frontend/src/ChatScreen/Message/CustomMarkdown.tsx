@@ -1,5 +1,5 @@
 import Markdown from "markdown-to-jsx"
-import React from "react"
+import React, { PropsWithChildren } from "react"
 import { parse } from "tldts";
 
 export interface CustomMarkdownProps {
@@ -8,7 +8,7 @@ export interface CustomMarkdownProps {
 
 export const CustomMarkdown = ({ text }: CustomMarkdownProps) => {
 
-    const MessageLink: React.FC = ({ children, ...props }) => {
+    const MessageLink: React.FC<PropsWithChildren> = ({ children, ...props }) => {
         return (
             <a {...props} target="_blank" rel="noreferrer">{children}</a>
         )

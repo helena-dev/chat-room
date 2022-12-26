@@ -1,4 +1,4 @@
-import React from "react"
+import React, { PropsWithChildren } from "react"
 import Icon from "@mdi/react"
 import { mdiDotsVertical } from '@mdi/js';
 import "./AppMenu.css"
@@ -8,7 +8,7 @@ export interface AppMenuProps {
     show: boolean;
 }
 
-export default class AppMenu extends React.Component<AppMenuProps> {
+export default class AppMenu extends React.Component<PropsWithChildren<AppMenuProps>> {
     render() {
         const { AppMenuAction, show, children } = this.props
 

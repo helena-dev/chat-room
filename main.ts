@@ -1,7 +1,7 @@
 import { IPinfo, IPinfoWrapper } from "node-ipinfo"
 import { RawData, WebSocket, WebSocketServer } from "ws"
 import { getMagicColorSequence, normalizeIP, decodeDataURL } from "./utils.js"
-import type { BackMessage, FrontMessage, LoginRequest, MessageList, ReceivedMessage, SignupRequest, TokenAuthRequest } from "./messages"
+import type { BackMessage, FrontMessage, LoginRequest, ReceivedMessage, SignupRequest, TokenAuthRequest } from "./messages.js"
 import { Pool, createPool } from 'mysql2/promise'
 import { createServer } from "http"
 import got from "got"

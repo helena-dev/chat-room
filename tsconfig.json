@@ -3,7 +3,7 @@
         "strict": true,
         "strictNullChecks": true,
         "target": "ES2018",
-        "moduleResolution": "node",
+        "moduleResolution": "node16",
         "module": "ES2020",
         "outDir": "dist",
         "esModuleInterop": true
